@@ -9,8 +9,8 @@ import type { EventRow, Note as NoteRow } from "@/lib/data";
 import type { Decision, Evaluation, GatewayAccount, PayoutCheck, PayoutFlag, Programme, RuleResult, Seal, Trade } from "@/lib/gateway/types";
 import { ago, money, pct, phaseLabel, shortDateTime, signed, stateLabel } from "@/lib/format";
 
-type Tab = "evaluation" | "payout" | "evidence" | "trades" | "notes" | "settings";
-const TABS: [Tab, string][] = [["evaluation", "Evaluation"], ["payout", "Payout check"], ["evidence", "Evidence"], ["trades", "Trades"], ["notes", "Notes"], ["settings", "Settings"]];
+type Tab = "evaluation" | "payout" | "evidence" | "flagged" | "notes" | "settings";
+const TABS: [Tab, string][] = [["evaluation", "Evaluation"], ["payout", "Payout check"], ["evidence", "Evidence"], ["flagged", "Flagged trades"], ["notes", "Notes"], ["settings", "Settings"]];
 
 const STATUS: Record<RuleResult["status"], { tone: Tone; label: string }> = { pass: { tone: "ok", label: "Pass" }, fail: { tone: "bad", label: "Fail" }, estimated_pass: { tone: "ok", label: "Pass (estimated)" }, estimated_fail: { tone: "warn", label: "Fail (estimated)" } };
 const VERDICT: Record<Evaluation["verdict"], { tone: Tone; label: string }> = { pass: { tone: "ok", label: "Pass" }, breach: { tone: "bad", label: "Breach" }, incomplete: { tone: "pend", label: "No trades yet" } };
@@ -84,7 +84,7 @@ export default function TraderDetail({ b }: { b: TraderBundle }) {
       {tab === "evaluation" && <EvaluationTab b={b} programme={programme} busy={busy} act={act} />}
       {tab === "payout" && <PayoutTab b={b} busy={busy} act={act} />}
       {tab === "evidence" && <EvidenceTab b={b} />}
-      {tab === "trades" && <TradesTab trades={b.trades} currency={a.currency} />}
+      {tab === "flagged" && <FlaggedTradesTab b={b} />}
       {tab === "notes" && <NotesTab b={b} />}
       {tab === "settings" && <SettingsTab b={b} busy={busy} setBusy={setBusy} setError={setError} />}
 
@@ -255,21 +255,44 @@ function EvidenceTab({ b }: { b: TraderBundle }) {
   );
 }
 
-// ── Trades ──────────────────────────────────────────────────────────────────
+// ── Flagged trades ──────────────────────────────────────────────────────────
+// Only the trades an evaluation failure or a payout flag names, with the
+// reason beside each. There is deliberately no general trade list here:
+// this is a lookup for the reviewer, not a view for the trader.
 
-function TradesTab({ trades, currency }: { trades: Trade[]; currency: string | null }) {
+function FlaggedTradesTab({ b }: { b: TraderBundle }) {
+  const reasons = new Map<string, string[]>();
+  const add = (ids: string[] | undefined, why: string) => { for (const id of ids ?? []) reasons.set(id, [...(reasons.get(id) ?? []), why]); };
+  const ev = b.evaluations[0];
+  for (const r of ev?.results ?? []) if (r.status === "fail") add(r.tradeIds, `Rule: ${r.rule}`);
+  const pc = b.payoutChecks[0];
+  for (const f of pc?.flags ?? []) add(f.tradeIds, `Payout check: ${f.check}`);
+  const byId = new Map(b.trades.map((t) => [t.trade_id, t]));
+  const rows = [...reasons.keys()].map((id) => ({ id, t: byId.get(id) ?? null, why: reasons.get(id)! })).sort((a, c) => (c.t?.close_time_utc ?? "").localeCompare(a.t?.close_time_utc ?? ""));
   return (
-    <Card>
-      <CardHeader title={`Trades (latest ${trades.length})`} />
-      {trades.length === 0 ? <div className="px-5 py-10 text-center text-muted">No closed trades in the ledger yet.</div> : (
-        <div className="overflow-x-auto"><table className="w-full border-collapse">
-          <thead><tr><th className="th">Closed</th><th className="th">Symbol</th><th className="th hidden md:table-cell">Side</th><th className="th num">Lots</th><th className="th num hidden md:table-cell">Hold</th><th className="th num hidden lg:table-cell">Pips</th><th className="th num">Net</th><th className="th hidden lg:table-cell">Trade</th></tr></thead>
-          <tbody>{trades.map((t) => (
-            <tr key={t.trade_id}><td className="td whitespace-nowrap">{shortDateTime(t.close_time_utc)}</td><td className="td font-semibold">{t.symbol}</td><td className="td hidden md:table-cell">{t.side === "buy" ? "Buy" : "Sell"}</td><td className="td num">{Number(t.volume).toFixed(2)}</td><td className="td num hidden md:table-cell">{t.hold_minutes < 60 ? `${t.hold_minutes} min` : `${(t.hold_minutes / 60).toFixed(1)} h`}</td><td className="td num hidden lg:table-cell">{Number(t.pips).toFixed(1)}</td><td className={`td num ${t.net > 0 ? "text-good" : t.net < 0 ? "text-bad" : ""}`}>{signed(Number(t.net))}{currency ? "" : ""}</td><td className="td mono text-xs text-muted hidden lg:table-cell">{t.trade_id}</td></tr>
-          ))}</tbody>
-        </table></div>
-      )}
-    </Card>
+    <div className="flex flex-col gap-4">
+      <Card>
+        <CardHeader title={`Flagged trades (${rows.length})`} />
+        <div className="border-b border-line px-5 py-3 text-[13px] text-ink/80">The trades named by the latest evaluation{ev ? ` (${shortDateTime(ev.evaluated_at)})` : ""}{pc ? ` and the latest payout check (${shortDateTime(pc.created_at)})` : ""}, with the reason each was flagged. Nothing else is listed.</div>
+        {rows.length === 0 ? <div className="px-5 py-10 text-center text-muted">No trade has been flagged by the latest evaluation or payout check.</div> : (
+          <div className="overflow-x-auto"><table className="w-full border-collapse">
+            <thead><tr><th className="th">Trade</th><th className="th">Why</th><th className="th hidden md:table-cell">Closed</th><th className="th hidden md:table-cell">Symbol</th><th className="th num hidden lg:table-cell">Lots</th><th className="th num hidden lg:table-cell">Hold</th><th className="th num">Net</th></tr></thead>
+            <tbody>{rows.map(({ id, t, why }) => (
+              <tr key={id}>
+                <td className="td mono text-xs">{id}</td>
+                <td className="td text-[13px]">{why.map((w) => <span key={w} className="mr-1.5 inline-block rounded-md bg-bg px-2 py-0.5">{w}</span>)}</td>
+                <td className="td whitespace-nowrap hidden md:table-cell">{t ? shortDateTime(t.close_time_utc) : <span className="text-muted">older than the loaded history</span>}</td>
+                <td className="td font-semibold hidden md:table-cell">{t?.symbol ?? "–"}</td>
+                <td className="td num hidden lg:table-cell">{t ? Number(t.volume).toFixed(2) : "–"}</td>
+                <td className="td num hidden lg:table-cell">{t ? (t.hold_minutes < 60 ? `${t.hold_minutes} min` : `${(t.hold_minutes / 60).toFixed(1)} h`) : "–"}</td>
+                <td className={`td num ${t && t.net > 0 ? "text-good" : t && t.net < 0 ? "text-bad" : ""}`}>{t ? signed(Number(t.net)) : "–"}</td>
+              </tr>
+            ))}</tbody>
+          </table></div>
+        )}
+      </Card>
+      <Note>Trades are shown only because a rule or a payout check named them. The full ledger is in the evidence pack.</Note>
+    </div>
   );
 }
 

@@ -17,7 +17,7 @@ export default async function TraderPage({ params }: { params: Promise<{ id: str
     c.gw.decisions(id),
     c.gw.payoutChecks(id),
     c.gw.seals(id),
-    c.gw.trades(id, 200),
+    c.gw.trades(id, 2000),
     listNotes(c.firmId, c.userId, id),
     listEvents(c.firmId, { accountId: id, limit: 50 }),
     account.phase === "funded" && account.reference ? c.gw.accounts({ reference: account.reference, phase: "evaluation" }) : Promise.resolve([]),
