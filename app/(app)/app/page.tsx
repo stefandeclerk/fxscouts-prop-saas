@@ -28,22 +28,22 @@ export default async function OverviewPage() {
         <Stat label="Disagreements" value={<span className={o.totals.disagreements ? "text-warn" : ""}>{o.totals.disagreements}</span>} detail="Your decision vs the gateway's" />
         <Stat label="Need attention" value={<span className={o.totals.attention ? "text-bad" : ""}>{o.totals.attention}</span>} detail="Reconnect required or retrying" />
       </div>
-      <div className="grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,2fr)_minmax(300px,1fr)]">
+      <div className="grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1fr)_290px]">
         <Card>
           <CardHeader title="Programmes"><Link href="/app/programmes" className="btn btn-sm">Manage</Link></CardHeader>
           {o.programmes.length === 0 ? <div className="px-5 py-10 text-center text-muted">No programmes yet. <Link href="/app/programmes" className="text-accent">Create one</Link> to start evaluating traders.</div> : (
             <div className="overflow-x-auto">
               <table className="w-full border-collapse">
-                <thead><tr><th className="th">Programme</th><th className="th num">Evaluation</th><th className="th num hidden md:table-cell">Funded</th><th className="th num">In breach</th><th className="th num hidden md:table-cell">Disagreements</th><th className="th num hidden lg:table-cell">Attention</th></tr></thead>
+                <thead><tr><th className="th">Programme</th><th className="th text-center">Evaluation</th><th className="th text-center hidden md:table-cell">Funded</th><th className="th text-center">In breach</th><th className="th text-center hidden md:table-cell">Disagreements</th><th className="th text-center hidden lg:table-cell">Attention</th></tr></thead>
                 <tbody>
                   {o.programmes.map((p) => (
                     <tr key={p.programme.id} className="hover:bg-bg">
                       <td className="td md:whitespace-nowrap"><Link href={`/app/accounts?programme=${p.programme.id}`} className="font-semibold hover:text-accent">{p.programme.name}</Link><span className="block text-xs text-muted">Rules v{p.programme.current?.version ?? 0}{p.byPhase.none ? ` · ${p.byPhase.none} without phase` : ""}</span></td>
-                      <td className="td num">{p.byPhase.evaluation}</td>
-                      <td className="td num hidden md:table-cell">{p.byPhase.funded}</td>
-                      <td className="td num">{p.breached.size ? <span className="font-semibold text-bad">{p.breached.size}</span> : "0"}</td>
-                      <td className="td num hidden md:table-cell">{p.disagreements ? <span className="font-semibold text-warn">{p.disagreements}</span> : "0"}</td>
-                      <td className="td num hidden lg:table-cell">{p.attention ? <span className="font-semibold text-bad">{p.attention}</span> : "0"}</td>
+                      <td className="td text-center tabular-nums">{p.byPhase.evaluation}</td>
+                      <td className="td text-center tabular-nums hidden md:table-cell">{p.byPhase.funded}</td>
+                      <td className="td text-center tabular-nums">{p.breached.size ? <span className="font-semibold text-bad">{p.breached.size}</span> : "0"}</td>
+                      <td className="td text-center tabular-nums hidden md:table-cell">{p.disagreements ? <span className="font-semibold text-warn">{p.disagreements}</span> : "0"}</td>
+                      <td className="td text-center tabular-nums hidden lg:table-cell">{p.attention ? <span className="font-semibold text-bad">{p.attention}</span> : "0"}</td>
                     </tr>
                   ))}
                   {o.unassigned.length > 0 && <tr><td className="td text-muted" colSpan={6}><Link href="/app/accounts?programme=none" className="hover:text-accent">{o.unassigned.length} {o.unassigned.length === 1 ? "trader is" : "traders are"} not on any programme</Link></td></tr>}

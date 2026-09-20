@@ -24,7 +24,7 @@ export default async function AdminFirmsPage() {
                 <td className="td num">{f.breached ? <span className="font-semibold text-bad">{f.breached}</span> : "0"}</td>
                 <td className="td num hidden xl:table-cell">{f.members}</td>
                 <td className="td whitespace-nowrap hidden lg:table-cell">{ago(f.lastEventAt, now)}{f.unseenEvents ? <span className="block text-xs text-muted">{f.unseenEvents} unseen</span> : null}</td>
-                <td className="td num whitespace-nowrap"><a href={`/api/admin/act-as?firm=${f.id}`} className="btn btn-sm whitespace-nowrap">Open as staff</a></td>
+                <td className="td num whitespace-nowrap"><a href={`/api/admin/act-as?firm=${f.id}`} className="btn btn-sm whitespace-nowrap">View their console</a></td>
               </tr>
             ))}
             {firms.length === 0 && <tr><td className="td py-10 text-center text-muted" colSpan={8}>No firms yet.</td></tr>}

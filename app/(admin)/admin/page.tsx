@@ -20,7 +20,7 @@ export default async function AdminHome() {
         <Stat label="Gateway unreachable" value={<span className={o.totals.unreachable ? "text-bad" : ""}>{o.totals.unreachable}</span>} detail="Connected firms whose API calls fail" />
         <Stat label="Rejected deliveries, 24 h" value={<span className={o.totals.rejections24 ? "text-bad" : ""}>{o.totals.rejections24}</span>} detail="Bad signature or unknown firm" />
       </div>
-      <div className="grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,2fr)_minmax(300px,1fr)]">
+      <div className="grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1fr)_290px]">
         <Card>
           <CardHeader title="Firms needing attention"><Link href="/admin/firms" className="btn btn-sm">All firms</Link></CardHeader>
           {attention.length === 0 ? <div className="px-5 py-10 text-center text-muted">Every firm is connected and receiving events.</div> : (

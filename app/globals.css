@@ -1,18 +1,20 @@
 @import "tailwindcss";
 
-/* FxScouts brand palette. The Gateway's interactive colour is purple; this
-   product's is teal, with purple kept as a secondary. Dark surfaces are
-   plum instead of navy. Same components, different signature. */
+/* FxScouts brand palette, from FXSCOUTS COLOURS.txt, nothing else. The
+   Gateway is dark-first with purple as its interactive colour; Prop Monitor
+   is the inverse: light surfaces where the Gateway is dark, navy where it
+   is light, the same wave motif, and Banking Blue as the interactive colour. */
 @theme {
   --color-ink: #00274f;
   --color-muted: #a0abb9;
   --color-line: #dadfe5;
   --color-bg: #f5f8fc;
   --color-surface: #ffffff;
-  --color-accent: #0fa3b1;
-  --color-accent-deep: #0b5f6e;
+  --color-accent: #1dacdf;
+  --color-accent-deep: #00274f;
   --color-violet: #6f5ff4;
-  --color-plum: #2a1660;
+  --color-plum: #00274f;
+  --color-ink-soft: #1c4a7a;   /* the primary navy lifted: buttons and the hero card */
   --color-good: #00bcbc;
   --color-info: #1dacdf;
   --color-warn: #d06de7;
@@ -39,7 +41,7 @@ body {
 @layer components {
   .card { @apply bg-surface border border-line rounded-xl shadow-card; }
   .btn { @apply inline-flex items-center gap-2 rounded-lg border border-line bg-surface px-3.5 py-2 font-medium hover:border-muted transition-colors disabled:opacity-60; }
-  .btn-primary { @apply inline-flex items-center gap-2 rounded-lg border border-accent bg-accent px-3.5 py-2 font-medium text-white hover:bg-[#0d909d] transition-colors disabled:opacity-60; }
+  .btn-primary { @apply inline-flex items-center gap-2 rounded-lg border border-accent bg-accent px-3.5 py-2 font-medium text-white hover:bg-[#1697c4] transition-colors disabled:opacity-60; }
   .btn-sm { @apply px-2.5 py-1.5 text-[13px]; }
   .input { @apply w-full rounded-lg border border-line bg-surface px-3 py-2.5 text-ink outline-none focus:border-accent focus:ring-[3px] focus:ring-accent/20; }
   .select {

@@ -16,7 +16,7 @@ export default async function AdminFirmPage({ params }: { params: Promise<{ id: 
     <>
       <div className="mb-2 flex items-center gap-1.5 text-[13px] text-muted"><Link href="/admin/firms" className="hover:text-accent">Firms</Link><span>/</span><span>{f.firm.name}</span></div>
       <PageHeader title={f.firm.name} sub={<>Since {shortDateTime(f.firm.createdAt)} · <span className="mono">{f.firm.id}</span></>}>
-        <a href={`/api/admin/act-as?firm=${f.firm.id}`} className="btn-primary">Open as staff</a>
+        <a href={`/api/admin/act-as?firm=${f.firm.id}`} className="btn-primary">View their console</a>
       </PageHeader>
       <div className="mb-4 grid grid-cols-2 gap-4 xl:grid-cols-5">
         <Stat label="Gateway" value={!f.connection ? <Status tone="pend">Not connected</Status> : f.accounts === null ? <Status tone="bad">Unreachable</Status> : <Status tone="ok">Connected</Status>} detail={f.connection ? `Customer ${f.connection.customerId.slice(0, 8)}…` : undefined} />
