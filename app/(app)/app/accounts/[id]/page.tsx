@@ -11,7 +11,7 @@ export default async function TraderPage({ params }: { params: Promise<{ id: str
   if (!c.gw) redirect("/app/settings");
   let account;
   try { account = await c.gw.account(id); } catch (e) { if (e instanceof GatewayError && e.status === 404) notFound(); throw e; }
-  const [programmes, evaluations, decisions, payoutChecks, sealsRes, trades, notes, events, siblings] = await Promise.all([
+  const [programmes, evaluations, decisions, payoutChecks, sealsRes, trades, notes, events, siblings, correlation] = await Promise.all([
     c.gw.programmes(),
     c.gw.evaluations(id),
     c.gw.decisions(id),
@@ -21,7 +21,8 @@ export default async function TraderPage({ params }: { params: Promise<{ id: str
     listNotes(c.firmId, c.userId, id),
     listEvents(c.firmId, { accountId: id, limit: 50 }),
     account.phase === "funded" && account.reference ? c.gw.accounts({ reference: account.reference, phase: "evaluation" }) : Promise.resolve([]),
+    c.gw.correlations(id),
   ]);
-  const b: TraderBundle = { account, programmes, evaluations, decisions, payoutChecks, seals: sealsRes.seals, publicKey: sealsRes.public_key, trades, notes, events, sibling: siblings.find((s) => s.id !== id) ?? null };
+  const b: TraderBundle = { account, programmes, evaluations, decisions, payoutChecks, seals: sealsRes.seals, publicKey: sealsRes.public_key, trades, notes, events, sibling: siblings.find((s) => s.id !== id) ?? null, correlation };
   return <TraderDetail b={b} />;
 }

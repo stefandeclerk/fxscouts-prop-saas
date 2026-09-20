@@ -7,7 +7,7 @@ export const dynamic = "force-dynamic";
 type Ctx = { params: Promise<{ id: string }> };
 const KINDS = new Set(["breach", "clear", "payout_approved", "payout_denied"]);
 
-// POST { action: sync | evaluate | payout_check | decision | disconnect, kind?, rule? }
+// POST { action: sync | evaluate | payout_check | correlate | decision | disconnect, kind?, rule? }
 export async function POST(req: Request, ctx: Ctx) {
   const c = await withGateway();
   if (c instanceof NextResponse) return c;
@@ -18,6 +18,7 @@ export async function POST(req: Request, ctx: Ctx) {
       case "sync": return NextResponse.json(await c.gw.sync(id));
       case "evaluate": return NextResponse.json(await c.gw.evaluateNow(id));
       case "payout_check": return NextResponse.json(await c.gw.runPayoutCheck(id));
+      case "correlate": return NextResponse.json(await c.gw.runCorrelations());   // firm-wide; every account is re-scored
       case "decision":
         if (!KINDS.has(b.kind ?? "")) return NextResponse.json({ error: "Choose a decision" }, { status: 400 });
         return NextResponse.json(await c.gw.recordDecision(id, b.kind as DecisionKind, b.rule?.trim() || null, { source: "prop-app", user: c.s.userId }));

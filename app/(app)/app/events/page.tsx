@@ -6,14 +6,16 @@ import { shortDateTime } from "@/lib/format";
 
 export const dynamic = "force-dynamic";
 
-const LABEL: Record<string, string> = { "evaluation.breach": "Breach", "evaluation.disagreement": "Disagreement", "behaviour.changed": "Behaviour changed", "account.reconnect_required": "Reconnect required", "sync.failed": "Sync failed", "sync.completed": "Synced", "account.connected": "Connected", "account.disconnected": "Disconnected" };
-const TONE: Record<string, Tone> = { "evaluation.breach": "bad", "evaluation.disagreement": "warn", "behaviour.changed": "warn", "account.reconnect_required": "bad", "sync.failed": "warn", "sync.completed": "ok", "account.connected": "ok", "account.disconnected": "pend" };
+const LABEL: Record<string, string> = { "evaluation.breach": "Breach", "evaluation.disagreement": "Disagreement", "behaviour.changed": "Behaviour changed", "correlation.flagged": "Linked accounts", "correlation.cleared": "Link cleared", "account.reconnect_required": "Reconnect required", "sync.failed": "Sync failed", "sync.completed": "Synced", "account.connected": "Connected", "account.disconnected": "Disconnected" };
+const TONE: Record<string, Tone> = { "evaluation.breach": "bad", "evaluation.disagreement": "warn", "behaviour.changed": "warn", "correlation.flagged": "bad", "correlation.cleared": "ok", "account.reconnect_required": "bad", "sync.failed": "warn", "sync.completed": "ok", "account.connected": "ok", "account.disconnected": "pend" };
 
 function summary(event: string, data: Record<string, unknown>): string {
   switch (event) {
     case "evaluation.breach": return `Rules v${data.version}: ${((data.rules as { rule: string }[]) ?? []).map((r) => r.rule).join(", ")}`;
     case "evaluation.disagreement": return String(data.detail ?? "");
     case "behaviour.changed": return `${((data.exceeded as string[]) ?? []).join(", ")} moved more than ${data.threshold_pct}% since evaluation`;
+    case "correlation.flagged": return `${data.peers} linked ${data.peers === 1 ? "account" : "accounts"}, ${data.kind}, ${data.severity}${data.group_id ? " · part of a group" : ""}`;
+    case "correlation.cleared": return "No longer moves with another account";
     case "sync.completed": return `${data.deals} deals, ${data.trades} trades`;
     case "sync.failed": case "account.reconnect_required": return String((data.error as { message?: string } | undefined)?.message ?? "");
     default: return "";
@@ -25,7 +27,7 @@ export default async function EventsPage() {
   const events = await listEvents(c.firmId, { limit: 300 });
   return (
     <>
-      <PageHeader title="Events" sub="Everything the gateway has sent this firm, signature-verified on arrival. Breaches, disagreements and behaviour changes are the ones to act on."><MarkSeen /></PageHeader>
+      <PageHeader title="Events" sub="Everything the gateway has sent this firm, signature-verified on arrival. Breaches, disagreements, behaviour changes and linked accounts are the ones to act on."><MarkSeen /></PageHeader>
       <Card>
         {events.length === 0 ? <div className="px-5 py-10 text-center text-muted">Nothing received yet. Events arrive after syncs run on the gateway.</div> : (
           <div className="overflow-x-auto"><table className="w-full border-collapse">

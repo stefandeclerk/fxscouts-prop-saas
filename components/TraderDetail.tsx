@@ -6,16 +6,18 @@ import { Download, RefreshCw } from "lucide-react";
 import { useState } from "react";
 import { Card, CardHeader, Field, Modal, Note, PageHeader, Status, toneForState, type Tone } from "@/components/ui";
 import type { EventRow, Note as NoteRow } from "@/lib/data";
-import type { Decision, Evaluation, GatewayAccount, PayoutCheck, PayoutFlag, Programme, RuleResult, Seal, Trade } from "@/lib/gateway/types";
+import type { CorrelationKind, CorrelationRecord, CorrelationSeverity, Decision, Evaluation, GatewayAccount, PayoutCheck, PayoutFlag, Programme, RuleResult, Seal, Trade } from "@/lib/gateway/types";
 import { ago, money, pct, phaseLabel, shortDateTime, signed, stateLabel } from "@/lib/format";
 
-type Tab = "evaluation" | "payout" | "evidence" | "flagged" | "notes" | "settings";
-const TABS: [Tab, string][] = [["evaluation", "Evaluation"], ["payout", "Payout check"], ["evidence", "Evidence"], ["flagged", "Flagged trades"], ["notes", "Notes"], ["settings", "Settings"]];
+type Tab = "evaluation" | "payout" | "linked" | "evidence" | "flagged" | "notes" | "settings";
+const TABS: [Tab, string][] = [["evaluation", "Evaluation"], ["payout", "Payout check"], ["linked", "Linked accounts"], ["evidence", "Evidence"], ["flagged", "Flagged trades"], ["notes", "Notes"], ["settings", "Settings"]];
 
 const STATUS: Record<RuleResult["status"], { tone: Tone; label: string }> = { pass: { tone: "ok", label: "Pass" }, fail: { tone: "bad", label: "Fail" }, estimated_pass: { tone: "ok", label: "Pass (estimated)" }, estimated_fail: { tone: "warn", label: "Fail (estimated)" } };
 const VERDICT: Record<Evaluation["verdict"], { tone: Tone; label: string }> = { pass: { tone: "ok", label: "Pass" }, breach: { tone: "bad", label: "Breach" }, incomplete: { tone: "pend", label: "No trades yet" } };
 const KIND: Record<string, string> = { breach: "Breach", clear: "Cleared", payout_approved: "Payout approved", payout_denied: "Payout denied" };
 const SEVERITY: Record<PayoutFlag["severity"], { tone: Tone; label: string }> = { info: { tone: "pend", label: "Info" }, review: { tone: "warn", label: "Review" }, block: { tone: "bad", label: "Block" } };
+const CORR_SEVERITY: Record<CorrelationSeverity, { tone: Tone; label: string }> = { none: { tone: "ok", label: "Clear" }, info: { tone: "pend", label: "Info" }, review: { tone: "warn", label: "Review" }, block: { tone: "bad", label: "Block" } };
+const CORR_KIND: Record<CorrelationKind, { label: string; means: string }> = { mirrored: { label: "Mirrored", means: "same direction" }, hedged: { label: "Hedged", means: "opposite direction" }, mixed: { label: "Mixed", means: "both directions" } };
 const METRIC: Record<string, string> = { avgLots: "Average lot size", tradesPerDay: "Trades per day", medianHoldSeconds: "Median hold time", winRate: "Win rate", quickStrikeShare: "Quick-strike share" };
 
 export type TraderBundle = {
@@ -30,6 +32,7 @@ export type TraderBundle = {
   notes: NoteRow[];
   events: EventRow[];
   sibling: GatewayAccount | null;
+  correlation: CorrelationRecord | null;
 };
 
 export default function TraderDetail({ b }: { b: TraderBundle }) {
@@ -61,10 +64,11 @@ export default function TraderDetail({ b }: { b: TraderBundle }) {
       </PageHeader>
 
       <Card className="mb-4">
-        <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6">
+        <div className="grid grid-cols-2 md:grid-cols-4 xl:grid-cols-7">
           {[
             ["State", <Status key="s" tone={toneForState(a.state)}>{stateLabel(a.state)}</Status>],
             ["Latest evaluation", b.evaluations[0] ? <Status key="e" tone={VERDICT[b.evaluations[0].verdict].tone}>{VERDICT[b.evaluations[0].verdict].label}</Status> : "–"],
+            ["Linked accounts", b.correlation ? (b.correlation.verdict === "flagged" ? <Status key="l" tone={CORR_SEVERITY[worst(b.correlation)].tone}>{b.correlation.peers.length} linked</Status> : <Status key="l" tone="ok">None</Status>) : "–"],
             ["Balance", money(a.balance, a.currency)],
             ["Starting balance", money(a.starting_balance, a.currency)],
             ["Access", a.access_level === "investor" ? "Investor (read-only)" : a.access_level === "master" ? "Master" : "–"],
@@ -83,6 +87,7 @@ export default function TraderDetail({ b }: { b: TraderBundle }) {
       {error && <p className="mb-3 text-[13px] text-bad">{error}</p>}
       {tab === "evaluation" && <EvaluationTab b={b} programme={programme} busy={busy} act={act} />}
       {tab === "payout" && <PayoutTab b={b} busy={busy} act={act} />}
+      {tab === "linked" && <LinkedTab b={b} busy={busy} act={act} />}
       {tab === "evidence" && <EvidenceTab b={b} />}
       {tab === "flagged" && <FlaggedTradesTab b={b} />}
       {tab === "notes" && <NotesTab b={b} />}
@@ -222,6 +227,66 @@ function PayoutTab({ b, busy, act }: { b: TraderBundle; busy: string | null; act
   );
 }
 
+
+// ── Linked accounts ─────────────────────────────────────────────────────────
+// Other accounts of this firm whose trades open and close within seconds of
+// this one's. Judged on timing alone: the gateway sees no identity, IP or
+// device. A match is a reason for the reviewer to look, never a verdict.
+
+function worst(r: CorrelationRecord): CorrelationSeverity {
+  const order: CorrelationSeverity[] = ["block", "review", "info", "none"];
+  return order.find((s) => r.peers.some((p) => p.severity === s)) ?? "none";
+}
+
+function LinkedTab({ b, busy, act }: { b: TraderBundle; busy: string | null; act: (a: string) => Promise<boolean> }) {
+  const r = b.correlation;
+  const run = <button className="btn btn-sm" onClick={() => act("correlate")} disabled={busy !== null}>{busy === "correlate" ? "Queued" : "Re-run for all traders"}</button>;
+  return (
+    <div className="flex flex-col gap-4">
+      <Card>
+        <CardHeader title="Linked accounts">{run}</CardHeader>
+        {!r ? <div className="px-5 py-10 text-center text-muted">No linked-accounts record yet. The gateway compares every trader&apos;s trades with every other trader&apos;s once a day; the first record appears after the first run.</div> : (
+          <>
+            <div className="flex flex-wrap items-center gap-x-6 gap-y-1 border-b border-line px-5 py-3 text-[13px]">
+              <Status tone={r.verdict === "clean" ? "ok" : CORR_SEVERITY[worst(r)].tone}>{r.verdict === "clean" ? "No linked accounts" : `${r.peers.length} linked ${r.peers.length === 1 ? "account" : "accounts"}`}</Status>
+              <span className="text-muted">{shortDateTime(r.computed_at)} UTC · {r.trades} trades in the {Math.round((new Date(r.window.to).getTime() - new Date(r.window.from).getTime()) / 86400_000)}-day window</span>
+              {r.group && <span className="text-muted">One of <b className="text-ink">{r.group.size}</b> accounts trading together</span>}
+              <span className="text-muted">{r.signature ? "Signed by the gateway" : "Unsigned"} · <span className="mono">{r.body_hash.slice(0, 16)}…</span></span>
+            </div>
+            {r.peers.length === 0 ? <div className="px-5 py-6 text-[13.5px] text-ink/80">No other account of yours opens and closes trades within {r.thresholds.bucket_seconds} seconds of this one often enough to matter.</div> : (
+              <div className="overflow-x-auto"><table className="w-full border-collapse">
+                <thead><tr><th className="th">Account</th><th className="th">Severity</th><th className="th">Pattern</th><th className="th num">Matched</th><th className="th num hidden md:table-cell">Share</th><th className="th num hidden lg:table-cell">Open / close</th><th className="th num hidden lg:table-cell">Same size</th></tr></thead>
+                <tbody>{r.peers.map((p) => (
+                  <tr key={p.account_id}>
+                    <td className="td"><Link href={`/app/accounts/${p.account_id}`} className="font-semibold hover:text-accent">{p.reference ?? p.account_id.slice(0, 8)}</Link></td>
+                    <td className="td"><Status tone={CORR_SEVERITY[p.severity].tone}>{CORR_SEVERITY[p.severity].label}</Status></td>
+                    <td className="td">{CORR_KIND[p.kind].label}<span className="block text-xs text-muted">{CORR_KIND[p.kind].means}</span></td>
+                    <td className="td num"><b className="font-semibold">{p.both_matches}</b> <span className="text-muted">of {r.trades}</span></td>
+                    <td className="td num hidden md:table-cell">{pct(p.score)}</td>
+                    <td className="td num hidden lg:table-cell text-[13px]">{p.open_matches} / {p.close_matches}</td>
+                    <td className="td num hidden lg:table-cell">{pct(p.volume_similarity)}</td>
+                  </tr>
+                ))}</tbody>
+              </table></div>
+            )}
+          </>
+        )}
+      </Card>
+      {r && r.peers.length > 0 && (
+        <Card>
+          <CardHeader title="How to read this" />
+          <div className="p-5 text-[13.5px] text-ink/80">
+            <p className="mb-2"><b>Matched</b> is the number of this account&apos;s trades that opened <i>and</i> closed on the same symbol within {r.thresholds.bucket_seconds} seconds of a trade on the other account. News releases make unrelated traders open together, but not close together, so both are required.</p>
+            <p className="mb-2"><b>Hedged</b> means the other account took the opposite side: one of the two is bound to pass. <b>Mirrored</b> means the same side, which is how one signal is spread over many accounts. Either way the matched trades are listed under Flagged trades.</p>
+            <p>A flag is raised at {r.thresholds.min_matches} matches and {pct(r.thresholds.min_score)} of trades, with at least {r.thresholds.min_trades} trades on each side. Thresholds are set under Settings. Legitimate copy-trading of a public signal looks the same; whether that is allowed is your rulebook&apos;s call.</p>
+          </div>
+        </Card>
+      )}
+      <Note>Matches are computed by the gateway from trade timing only, across this firm&apos;s accounts. The record is signed and included in the evidence pack.</Note>
+    </div>
+  );
+}
+
 // ── Evidence ────────────────────────────────────────────────────────────────
 
 function EvidenceTab({ b }: { b: TraderBundle }) {
@@ -267,14 +332,16 @@ function FlaggedTradesTab({ b }: { b: TraderBundle }) {
   for (const r of ev?.results ?? []) if (r.status === "fail") add(r.tradeIds, `Rule: ${r.rule}`);
   const pc = b.payoutChecks[0];
   for (const f of pc?.flags ?? []) add(f.tradeIds, `Payout check: ${f.check}`);
+  const cr = b.correlation;
+  for (const p of cr?.peers ?? []) if (p.severity !== "none" && p.severity !== "info") add(p.trade_ids, `Within ${cr!.thresholds.bucket_seconds}s of ${p.reference ?? p.account_id.slice(0, 8)}, ${CORR_KIND[p.kind].means}`);
   const byId = new Map(b.trades.map((t) => [t.trade_id, t]));
   const rows = [...reasons.keys()].map((id) => ({ id, t: byId.get(id) ?? null, why: reasons.get(id)! })).sort((a, c) => (c.t?.close_time_utc ?? "").localeCompare(a.t?.close_time_utc ?? ""));
   return (
     <div className="flex flex-col gap-4">
       <Card>
         <CardHeader title={`Flagged trades (${rows.length})`} />
-        <div className="border-b border-line px-5 py-3 text-[13px] text-ink/80">The trades named by the latest evaluation{ev ? ` (${shortDateTime(ev.evaluated_at)})` : ""}{pc ? ` and the latest payout check (${shortDateTime(pc.created_at)})` : ""}, with the reason each was flagged. Nothing else is listed.</div>
-        {rows.length === 0 ? <div className="px-5 py-10 text-center text-muted">No trade has been flagged by the latest evaluation or payout check.</div> : (
+        <div className="border-b border-line px-5 py-3 text-[13px] text-ink/80">The trades named by the latest evaluation{ev ? ` (${shortDateTime(ev.evaluated_at)})` : ""}{pc ? `, the latest payout check (${shortDateTime(pc.created_at)})` : ""}{cr?.verdict === "flagged" ? ` and the linked-accounts record (${shortDateTime(cr.computed_at)})` : ""}, with the reason each was flagged. Nothing else is listed.</div>
+        {rows.length === 0 ? <div className="px-5 py-10 text-center text-muted">No trade has been flagged by the latest evaluation, payout check or linked-accounts record.</div> : (
           <div className="overflow-x-auto"><table className="w-full border-collapse">
             <thead><tr><th className="th">Trade</th><th className="th">Why</th><th className="th hidden md:table-cell">Closed</th><th className="th hidden md:table-cell">Symbol</th><th className="th num hidden lg:table-cell">Lots</th><th className="th num hidden lg:table-cell">Hold</th><th className="th num">Net</th></tr></thead>
             <tbody>{rows.map(({ id, t, why }) => (
@@ -291,7 +358,7 @@ function FlaggedTradesTab({ b }: { b: TraderBundle }) {
           </table></div>
         )}
       </Card>
-      <Note>Trades are shown only because a rule or a payout check named them. The full ledger is in the evidence pack.</Note>
+      <Note>Trades are shown only because a rule, a payout check or a linked-account match named them. The full ledger is in the evidence pack.</Note>
     </div>
   );
 }

@@ -93,3 +93,21 @@ export interface Trade {
 }
 
 export interface BatchResult { created: number; failed: number; results: ({ ok: true } & GatewayAccount | { ok: false; login: string | null; reference: string | null; error: string })[] }
+
+// Account correlation: accounts of this firm traded from one source, judged
+// on trade timing alone (docs/gateway-spec-account-correlation.md).
+export type CorrelationKind = "mirrored" | "hedged" | "mixed";
+export type CorrelationSeverity = "none" | "info" | "review" | "block";
+export interface CorrelationPeer {
+  account_id: string; reference: string | null; kind: CorrelationKind; severity: CorrelationSeverity;
+  score: number; both_matches: number; open_matches: number; close_matches: number; volume_similarity: number;
+  trade_ids: string[];   // this account's trades that matched
+}
+export interface CorrelationRecord {
+  id: string; account_id: string; computed_at: string; window: { from: string; to: string }; trades: number;
+  verdict: "clean" | "flagged"; peers: CorrelationPeer[]; group: { id: string; size: number } | null;
+  thresholds: CorrelationThresholds; body_hash: string; signature: string | null;
+}
+export interface CorrelationGroup { id: string; size: number; kind: CorrelationKind; severity: CorrelationSeverity; accounts: { id: string; reference: string | null; name: string; phase: Phase | null }[] }
+export interface CorrelationThresholds { bucket_seconds: number; min_matches: number; min_score: number; min_trades: number }
+export interface CustomerSettings { correlation_enabled: boolean; correlation_bucket_seconds: number; correlation_min_matches: number; correlation_min_score: number; correlation_min_trades: number }

@@ -73,3 +73,4 @@ body {
 .rise-3 { animation-delay: 0.32s; }
 .rise-4 { animation-delay: 0.46s; }
 @media (prefers-reduced-motion: reduce) { .rise { animation: none; } }
+

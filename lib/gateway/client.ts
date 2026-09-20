@@ -2,7 +2,8 @@ import "server-only";
 
 import { decrypt, encrypt, toBytea } from "@/lib/server/crypto";
 import { db } from "@/lib/server/db";
-import type { BatchResult, Decision, DecisionKind, Evaluation, GatewayAccount, PayoutCheck, Programme, ProgrammeRules, Seal, Trade } from "@/lib/gateway/types";
+import type { BatchResult, CorrelationGroup, CorrelationRecord, CustomerSettings, Decision, DecisionKind, Evaluation, GatewayAccount, PayoutCheck, Programme, ProgrammeRules, Seal, Trade } from "@/lib/gateway/types";
+import { sampleCorrelations, sampleGroups, sampleSettings } from "@/lib/gateway/sample";
 
 // The gateway API, as this app calls it. One instance per firm, holding
 // that firm's API key; only server code can construct one. The app never
@@ -59,6 +60,20 @@ export class Gateway {
   runPayoutCheck(id: string) { return this.call<PayoutCheck>("POST", `/accounts/${id}/payout-checks`); }
   seals(id: string) { return this.call<{ public_key: string | null; seals: Seal[] }>("GET", `/accounts/${id}/seals`); }
   evidence(id: string) { return this.call<string>("GET", `/accounts/${id}/evidence`, undefined, true); }
+
+  // Correlations. A gateway without this feature yet answers 404; that reads
+  // as "no record" here so the rest of the console keeps working.
+  correlations(id: string) { return this.optional(() => this.call<{ record: CorrelationRecord | null }>("GET", `/accounts/${id}/correlations`).then((r) => r.record), () => sampleCorrelations(id)); }
+  correlationHistory(id: string, limit = 20) { return this.optional(() => this.call<{ records: CorrelationRecord[] }>("GET", `/accounts/${id}/correlations/history?limit=${limit}`).then((r) => r.records), () => []); }
+  correlationGroups() { return this.optional(() => this.call<{ groups: CorrelationGroup[] }>("GET", "/correlations/groups").then((r) => r.groups), () => sampleGroups()); }
+  runCorrelations() { return this.call<{ queued: boolean }>("POST", "/correlations/run"); }
+  settings() { return this.optional(() => this.call<CustomerSettings>("GET", "/settings"), () => sampleSettings()); }
+  updateSettings(patch: Partial<CustomerSettings>) { return this.call<CustomerSettings>("PATCH", "/settings", patch); }
+
+  private async optional<T>(fn: () => Promise<T>, fallback: () => T): Promise<T> {
+    if (process.env.CORRELATION_SAMPLE === "true") return fallback();
+    try { return await fn(); } catch (e) { if (e instanceof GatewayError && e.status === 404) return fallback(); throw e; }
+  }
 
   // Webhooks
   webhooks() { return this.call<{ webhooks: { id: string; url: string; events: string[]; active: boolean }[] }>("GET", "/webhooks").then((r) => r.webhooks); }

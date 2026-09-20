@@ -4,9 +4,10 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Card, CardHeader, Field, Note, PageHeader, Status } from "@/components/ui";
 import type { Connection } from "@/lib/gateway/client";
+import type { CustomerSettings } from "@/lib/gateway/types";
 import { shortDateTime } from "@/lib/format";
 
-export default function SettingsView({ name, connection, webhookOk, members, gatewayUrl, bypass }: { name: string; connection: Connection | null; webhookOk: boolean | null; members: { userId: string; role: string; since: string }[]; gatewayUrl: string; bypass: boolean }) {
+export default function SettingsView({ name, connection, webhookOk, correlation, members, gatewayUrl, bypass }: { name: string; connection: Connection | null; webhookOk: boolean | null; correlation: CustomerSettings | null; members: { userId: string; role: string; since: string }[]; gatewayUrl: string; bypass: boolean }) {
   const router = useRouter();
   const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -59,6 +60,25 @@ export default function SettingsView({ name, connection, webhookOk, members, gat
           </Card>
           <Note>Inviting team members and roles are managed through Supabase Auth for now.</Note>
         </div>
+        {connection && (
+          <Card className="xl:col-span-2">
+            <CardHeader title="Linked accounts" />
+            <div className="border-b border-line px-5 py-3 text-[13px] text-ink/80">Once a day the gateway compares every trader&apos;s trades with every other trader&apos;s and flags pairs that open and close on the same symbol within seconds, often enough to point to one source. These thresholds decide when a pair is flagged. Lower them to see more, raise them to see less.</div>
+            {!correlation ? <div className="px-5 py-6 text-[13px] text-muted">The gateway does not offer linked-account detection yet.</div> : (
+              <form className="p-5" onSubmit={(e) => { e.preventDefault(); const f = new FormData(e.currentTarget); void post({ action: "correlation", enabled: f.get("enabled") === "on", bucket_seconds: f.get("bucket_seconds"), min_matches: f.get("min_matches"), min_score: f.get("min_score"), min_trades: f.get("min_trades") }); }}>
+                {error && busy === null && <p className="mb-3 text-[13px] text-bad">{error}</p>}
+                <label className="mb-4 flex items-center gap-2 text-[13.5px]"><input type="checkbox" name="enabled" defaultChecked={correlation.correlation_enabled} />Run linked-account detection for this firm</label>
+                <div className="grid max-w-[720px] grid-cols-1 gap-x-4 md:grid-cols-2">
+                  <Field label="Match window (seconds)" hint="Two trades match when they open, and separately close, within this many seconds of each other."><input className="input" name="bucket_seconds" type="number" min={1} step={1} defaultValue={correlation.correlation_bucket_seconds} /></Field>
+                  <Field label="Minimum matched trades" hint="Trades matched on both open and close before a pair is flagged."><input className="input" name="min_matches" type="number" min={5} step={1} defaultValue={correlation.correlation_min_matches} /></Field>
+                  <Field label="Minimum share of trades" hint="Matched trades as a fraction of the smaller account's trades, 0–1."><input className="input" name="min_score" type="number" min={0.1} max={1} step={0.05} defaultValue={correlation.correlation_min_score} /></Field>
+                  <Field label="Minimum trades per account" hint="Accounts with fewer trades in the window are not compared."><input className="input" name="min_trades" type="number" min={5} step={1} defaultValue={correlation.correlation_min_trades} /></Field>
+                </div>
+                <button type="submit" className="btn-primary btn-sm" disabled={busy !== null}>{busy === "correlation" ? "Saving" : "Save thresholds"}</button>
+              </form>
+            )}
+          </Card>
+        )}
       </div>
     </>
   );
