@@ -1,26 +1,65 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+/* FxScouts brand palette, shared with the Gateway console. This product's
+   own signature is the deep-purple ("plum") sidebar and dark bands instead
+   of the Gateway's navy. */
+@theme {
+  --color-ink: #00274f;
+  --color-muted: #a0abb9;
+  --color-line: #dadfe5;
+  --color-bg: #f5f8fc;
+  --color-surface: #ffffff;
+  --color-accent: #6f5ff4;
+  --color-accent-deep: #401e8b;
+  --color-plum: #2a1660;
+  --color-good: #00bcbc;
+  --color-info: #1dacdf;
+  --color-warn: #d06de7;
+  --color-bad: #e0533d;
+  --font-sans: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-mono: "SF Mono", Menlo, Consolas, monospace;
+  --shadow-card: 0 1px 2px rgba(0, 39, 79, 0.06), 0 6px 20px rgba(0, 39, 79, 0.05);
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+html,
+body {
+  min-height: 100%;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  color: var(--color-ink);
+  background: linear-gradient(180deg, #ffffff 0%, var(--color-bg) 220px);
+  font-family: var(--font-sans);
+  font-size: 14px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
 }
+
+@layer components {
+  .card { @apply bg-surface border border-line rounded-xl shadow-card; }
+  .btn { @apply inline-flex items-center gap-2 rounded-lg border border-line bg-surface px-3.5 py-2 font-medium hover:border-muted transition-colors disabled:opacity-60; }
+  .btn-primary { @apply inline-flex items-center gap-2 rounded-lg border border-accent bg-accent px-3.5 py-2 font-medium text-white hover:bg-[#5e4ee6] transition-colors disabled:opacity-60; }
+  .btn-sm { @apply px-2.5 py-1.5 text-[13px]; }
+  .input { @apply w-full rounded-lg border border-line bg-surface px-3 py-2.5 text-ink outline-none focus:border-accent focus:ring-[3px] focus:ring-accent/20; }
+  .select {
+    @apply appearance-none bg-no-repeat pr-9;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23A0ABB9' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='m6 9 6 6 6-6'/></svg>");
+    background-position: right 12px center;
+  }
+  .th { @apply text-left text-xs font-semibold text-muted px-5 py-3 border-b border-line whitespace-nowrap; }
+  .td { @apply px-5 py-3.5 border-b border-line align-middle; }
+  tr:last-child > .td { @apply border-b-0; }
+  .num { @apply text-right tabular-nums; }
+  .mono { font-family: var(--font-mono); font-size: 12.5px; }
+}
+
+@keyframes rise {
+  from { opacity: 0; transform: translateY(14px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.rise { animation: rise 0.7s cubic-bezier(0.2, 0.7, 0.2, 1) both; }
+.rise-1 { animation-delay: 0.05s; }
+.rise-2 { animation-delay: 0.18s; }
+.rise-3 { animation-delay: 0.32s; }
+.rise-4 { animation-delay: 0.46s; }
+@media (prefers-reduced-motion: reduce) { .rise { animation: none; } }
