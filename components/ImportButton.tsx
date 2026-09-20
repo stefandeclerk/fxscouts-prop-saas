@@ -39,7 +39,7 @@ export default function ImportButton({ programmes, defaultOpen = false, defaultP
             <p className="mb-3 text-[13.5px]">{result.created} of {result.results.length} accounts connected and queued for their first sync.</p>
             {result.failed > 0 && (
               <div className="max-h-64 overflow-auto rounded-lg border border-line">
-                <table className="w-full border-collapse text-[13px]">
+                <table className="w-full min-w-[640px] border-collapse text-[13px]">
                   <thead><tr><th className="th">Login</th><th className="th">Problem</th></tr></thead>
                   <tbody>{result.results.filter((r) => !r.ok).map((r, i) => <tr key={i}><td className="td mono">{"login" in r ? r.login : ""}</td><td className="td text-bad">{"error" in r ? r.error : ""}</td></tr>)}</tbody>
                 </table>

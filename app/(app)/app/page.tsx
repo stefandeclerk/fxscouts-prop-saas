@@ -33,12 +33,12 @@ export default async function OverviewPage() {
           <CardHeader title="Programmes"><Link href="/app/programmes" className="btn btn-sm">Manage</Link></CardHeader>
           {o.programmes.length === 0 ? <div className="px-5 py-10 text-center text-muted">No programmes yet. <Link href="/app/programmes" className="text-accent">Create one</Link> to start evaluating traders.</div> : (
             <div className="overflow-x-auto">
-              <table className="w-full border-collapse">
+              <table className="w-full min-w-[760px] border-collapse">
                 <thead><tr><th className="th">Programme</th><th className="th num">Evaluation</th><th className="th num">Funded</th><th className="th num">In breach</th><th className="th num">Disagreements</th><th className="th num">Attention</th></tr></thead>
                 <tbody>
                   {o.programmes.map((p) => (
                     <tr key={p.programme.id} className="hover:bg-bg">
-                      <td className="td"><Link href={`/app/accounts?programme=${p.programme.id}`} className="font-semibold hover:text-accent">{p.programme.name}</Link><span className="block text-xs text-muted">Rules v{p.programme.current?.version ?? 0}{p.byPhase.none ? ` · ${p.byPhase.none} without phase` : ""}</span></td>
+                      <td className="td whitespace-nowrap"><Link href={`/app/accounts?programme=${p.programme.id}`} className="font-semibold hover:text-accent">{p.programme.name}</Link><span className="block text-xs text-muted">Rules v{p.programme.current?.version ?? 0}{p.byPhase.none ? ` · ${p.byPhase.none} without phase` : ""}</span></td>
                       <td className="td num">{p.byPhase.evaluation}</td>
                       <td className="td num">{p.byPhase.funded}</td>
                       <td className="td num">{p.breached.size ? <span className="font-semibold text-bad">{p.breached.size}</span> : "0"}</td>

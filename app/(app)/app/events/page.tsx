@@ -28,7 +28,7 @@ export default async function EventsPage() {
       <PageHeader title="Events" sub="Everything the gateway has sent this firm, signature-verified on arrival. Breaches, disagreements and behaviour changes are the ones to act on."><MarkSeen /></PageHeader>
       <Card>
         {events.length === 0 ? <div className="px-5 py-10 text-center text-muted">Nothing received yet. Events arrive after syncs run on the gateway.</div> : (
-          <div className="overflow-x-auto"><table className="w-full border-collapse">
+          <div className="overflow-x-auto"><table className="w-full min-w-[760px] border-collapse">
             <thead><tr><th className="th">Received</th><th className="th">Event</th><th className="th">Trader</th><th className="th">Detail</th></tr></thead>
             <tbody>{events.map((e) => {
               const data = (e.payload.data ?? {}) as Record<string, unknown>;

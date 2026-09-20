@@ -119,7 +119,7 @@ function EvaluationTab({ b, programme, busy, act }: { b: TraderBundle; programme
               <span className="text-muted">Evaluated {shortDateTime(shown.evaluated_at)} UTC against rules v{shown.version}</span>
               <span className="text-muted">{shown.signature ? "Signed by the gateway" : "Unsigned"} · <span className="mono">{shown.body_hash.slice(0, 16)}…</span></span>
             </div>
-            <div className="overflow-x-auto"><table className="w-full border-collapse">
+            <div className="overflow-x-auto"><table className="w-full min-w-[760px] border-collapse">
               <thead><tr><th className="th">Rule</th><th className="th">Limit</th><th className="th">Observed</th><th className="th">Result</th><th className="th">Basis</th></tr></thead>
               <tbody>
                 {shown.results.map((r) => (
@@ -148,7 +148,7 @@ function EvaluationTab({ b, programme, busy, act }: { b: TraderBundle; programme
         </CardHeader>
         <div className="border-b border-line px-5 py-3 text-[13px] text-ink/80">Record what your own system concluded. When it differs from the gateway&apos;s evaluation, it is flagged here and arrives as a disagreement event.</div>
         {b.decisions.length === 0 ? <div className="px-5 py-8 text-center text-muted">No decisions recorded.</div> : (
-          <div className="overflow-x-auto"><table className="w-full border-collapse">
+          <div className="overflow-x-auto"><table className="w-full min-w-[760px] border-collapse">
             <thead><tr><th className="th">When</th><th className="th">Your decision</th><th className="th">Rule</th><th className="th">Gateway</th><th className="th">Detail</th></tr></thead>
             <tbody>{b.decisions.map((d) => (
               <tr key={d.id}><td className="td whitespace-nowrap">{shortDateTime(d.decided_at)}</td><td className="td font-semibold">{KIND[d.kind] ?? d.kind}</td><td className="td">{d.rule ?? "–"}</td>
@@ -191,7 +191,7 @@ function PayoutTab({ b, busy, act }: { b: TraderBundle; busy: string | null; act
               ))}
             </div>
             {shown.flags.length === 0 ? <div className="px-5 py-6 text-[13.5px] text-ink/80">Nothing a reviewer would need to look at.</div> : (
-              <div className="overflow-x-auto"><table className="w-full border-collapse">
+              <div className="overflow-x-auto"><table className="w-full min-w-[760px] border-collapse">
                 <thead><tr><th className="th">Check</th><th className="th">Severity</th><th className="th">Observed</th><th className="th">Threshold</th><th className="th">Trades</th></tr></thead>
                 <tbody>{shown.flags.map((f) => (
                   <tr key={f.check}><td className="td font-semibold">{f.check}</td><td className="td"><Status tone={SEVERITY[f.severity].tone}>{SEVERITY[f.severity].label}</Status></td><td className="td">{f.observed}</td><td className="td text-[13px] text-muted">{f.threshold}</td><td className="td mono text-xs">{f.tradeIds.length === 0 ? "–" : f.tradeIds.slice(0, 5).join(", ") + (f.tradeIds.length > 5 ? ` +${f.tradeIds.length - 5}` : "")}</td></tr>
@@ -205,7 +205,7 @@ function PayoutTab({ b, busy, act }: { b: TraderBundle; busy: string | null; act
         <Card>
           <CardHeader title="Funded vs evaluation" />
           <div className="border-b border-line px-5 py-3 text-[13px] text-ink/80">Compared with this trader&apos;s evaluation account{b.sibling ? <> (<Link href={`/app/accounts/${b.sibling.id}`} className="text-accent">{b.sibling.name}</Link>)</> : ""}. Anything over {shown.phaseComparison.thresholdPct}% is flagged.</div>
-          <div className="overflow-x-auto"><table className="w-full border-collapse">
+          <div className="overflow-x-auto"><table className="w-full min-w-[760px] border-collapse">
             <thead><tr><th className="th">Metric</th><th className="th num">Evaluation</th><th className="th num">Funded</th><th className="th num">Change</th></tr></thead>
             <tbody>{(["avgLots", "tradesPerDay", "medianHoldSeconds", "winRate", "quickStrikeShare"] as const).map((k) => {
               const ev = shown.phaseComparison!.evaluation[k], fu = shown.profile[k], d = shown.phaseComparison!.deltas[k];
@@ -237,7 +237,7 @@ function EvidenceTab({ b }: { b: TraderBundle }) {
         <CardHeader title="Ledger seals" />
         <div className="border-b border-line px-5 py-3 text-[13px] text-ink/80">After every sync the gateway hashes the whole ledger, chains it to the previous seal and signs it. A ledger handed over later that does not hash to a sealed value has been altered since.</div>
         {b.seals.length === 0 ? <div className="px-5 py-8 text-center text-muted">No seal yet; the first is made after the first successful sync.</div> : (
-          <div className="overflow-x-auto"><table className="w-full border-collapse">
+          <div className="overflow-x-auto"><table className="w-full min-w-[760px] border-collapse">
             <thead><tr><th className="th">Seal</th><th className="th">Sealed at</th><th className="th num">Deals</th><th className="th">Ledger hash</th><th className="th">Chained to</th><th className="th">Signed</th></tr></thead>
             <tbody>{b.seals.map((s) => (
               <tr key={s.seq}><td className="td font-semibold">#{s.seq}</td><td className="td whitespace-nowrap">{shortDateTime(s.sealed_at)} UTC</td><td className="td num">{s.deals_count.toLocaleString("en-GB")}</td><td className="td mono text-xs">{s.ledger_hash.slice(0, 20)}…</td><td className="td mono text-xs">{s.prev_hash ? `${s.prev_hash.slice(0, 12)}…` : "first"}</td><td className="td">{s.signature ? <Status tone="ok">Yes</Status> : <Status tone="pend">No</Status>}</td></tr>
@@ -262,7 +262,7 @@ function TradesTab({ trades, currency }: { trades: Trade[]; currency: string | n
     <Card>
       <CardHeader title={`Trades (latest ${trades.length})`} />
       {trades.length === 0 ? <div className="px-5 py-10 text-center text-muted">No closed trades in the ledger yet.</div> : (
-        <div className="overflow-x-auto"><table className="w-full border-collapse">
+        <div className="overflow-x-auto"><table className="w-full min-w-[760px] border-collapse">
           <thead><tr><th className="th">Closed</th><th className="th">Symbol</th><th className="th">Side</th><th className="th num">Lots</th><th className="th num">Hold</th><th className="th num">Pips</th><th className="th num">Net</th><th className="th">Trade</th></tr></thead>
           <tbody>{trades.map((t) => (
             <tr key={t.trade_id}><td className="td whitespace-nowrap">{shortDateTime(t.close_time_utc)}</td><td className="td font-semibold">{t.symbol}</td><td className="td">{t.side === "buy" ? "Buy" : "Sell"}</td><td className="td num">{Number(t.volume).toFixed(2)}</td><td className="td num">{t.hold_minutes < 60 ? `${t.hold_minutes} min` : `${(t.hold_minutes / 60).toFixed(1)} h`}</td><td className="td num">{Number(t.pips).toFixed(1)}</td><td className={`td num ${t.net > 0 ? "text-good" : t.net < 0 ? "text-bad" : ""}`}>{signed(Number(t.net))}{currency ? "" : ""}</td><td className="td mono text-xs text-muted">{t.trade_id}</td></tr>

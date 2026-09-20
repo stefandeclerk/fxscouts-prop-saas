@@ -30,7 +30,7 @@ export default async function AdminFirmPage({ params }: { params: Promise<{ id: 
           <Card>
             <CardHeader title="Accounts" />
             {!f.accounts ? <div className="px-5 py-8 text-center text-muted">{f.connection ? "The gateway did not answer." : "Not connected."}</div> : f.accounts.length === 0 ? <div className="px-5 py-8 text-center text-muted">No accounts yet.</div> : (
-              <div className="overflow-x-auto"><table className="w-full border-collapse">
+              <div className="overflow-x-auto"><table className="w-full min-w-[760px] border-collapse">
                 <thead><tr><th className="th">Trader</th><th className="th">Programme</th><th className="th">Phase</th><th className="th">State</th><th className="th">Rules</th></tr></thead>
                 <tbody>{f.accounts.map((a) => (
                   <tr key={a.id}><td className="td font-semibold">{a.reference || a.name}<span className="block text-xs font-normal text-muted">{a.name} · {a.server}</span></td><td className="td">{f.programmes?.find((p) => p.id === a.programme_id)?.name ?? "–"}</td><td className="td">{phaseLabel(a.phase)}</td><td className="td"><Status tone={toneForState(a.state)}>{stateLabel(a.state)}</Status></td><td className="td">{breached.has(a.id) ? <Status tone="bad">Breach</Status> : a.programme_id ? <Status tone="ok">Clear</Status> : "–"}</td></tr>

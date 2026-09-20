@@ -47,7 +47,7 @@ export default function Programmes({ programmes, counts }: { programmes: Program
       <Card>
         {programmes.length === 0 ? <div className="px-5 py-10 text-center text-muted">No programmes yet. Create one, then import traders onto it.</div> : (
           <div className="overflow-x-auto">
-            <table className="w-full border-collapse">
+            <table className="w-full min-w-[760px] border-collapse">
               <thead><tr><th className="th w-8" /><th className="th">Programme</th><th className="th w-full">Current rules</th><th className="th num">Traders</th><th className="th">State</th><th className="th" /></tr></thead>
               <tbody>
                 {programmes.map((p) => {
@@ -94,7 +94,7 @@ function FragmentRow({ p, open, summary, count, onToggle, onVersion, onActive }:
           <td className="td bg-bg" colSpan={6}>
             <div className="px-2 py-1">
               <div className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted">Version history</div>
-              <table className="w-full border-collapse text-[13px]">
+              <table className="w-full min-w-[640px] border-collapse text-[13px]">
                 <thead><tr><th className="th">Version</th><th className="th">Effective from</th><th className="th">Rules</th><th className="th">Note</th><th className="th">Signed</th></tr></thead>
                 <tbody>
                   {[...p.versions].reverse().map((v) => (

@@ -20,7 +20,7 @@ export default async function AdminBillingPage() {
         <Stat label="Monthly run rate" value={`$${(accounts * PRICE).toLocaleString("en-GB")}`} />
       </div>
       <Card>
-        <div className="overflow-x-auto"><table className="w-full border-collapse">
+        <div className="overflow-x-auto"><table className="w-full min-w-[760px] border-collapse">
           <thead><tr><th className="th">Firm</th><th className="th num">Accounts</th><th className="th num">Monthly</th></tr></thead>
           <tbody>{firms.map((f) => <tr key={f.id}><td className="td"><Link href={`/admin/firms/${f.id}`} className="font-semibold hover:text-accent">{f.name}</Link></td><td className="td num">{f.accounts ?? "–"}</td><td className="td num">${((f.accounts ?? 0) * PRICE).toLocaleString("en-GB")}</td></tr>)}{firms.length === 0 && <tr><td className="td py-8 text-center text-muted" colSpan={3}>No connected firms.</td></tr>}</tbody>
         </table></div>
