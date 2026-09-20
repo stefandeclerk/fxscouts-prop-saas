@@ -14,10 +14,10 @@ export default async function AdminEventsPage() {
       <PageHeader title="Events" sub="Every delivery the gateway made to any firm, newest first." />
       <Card>
         {events.length === 0 ? <div className="px-5 py-10 text-center text-muted">Nothing received yet.</div> : (
-          <div className="overflow-x-auto"><table className="w-full min-w-[760px] border-collapse">
-            <thead><tr><th className="th">Received</th><th className="th">Firm</th><th className="th">Event</th><th className="th">Trader</th><th className="th">Seen</th></tr></thead>
+          <div className="overflow-x-auto"><table className="w-full border-collapse">
+            <thead><tr><th className="th">Received</th><th className="th">Firm</th><th className="th">Event</th><th className="th hidden md:table-cell">Trader</th><th className="th hidden lg:table-cell">Seen</th></tr></thead>
             <tbody>{events.map((e) => (
-              <tr key={e.id}><td className="td whitespace-nowrap">{shortDateTime(e.at)}</td><td className="td"><Link href={`/admin/firms/${e.firmId}`} className="font-semibold hover:text-accent">{e.firmName}</Link></td><td className="td"><Status tone={TONE[e.event] ?? "pend"}>{e.event}</Status></td><td className="td mono text-xs">{String(e.data.reference ?? e.accountId?.slice(0, 8) ?? "–")}</td><td className="td">{e.seen ? "Yes" : <span className="text-muted">No</span>}</td></tr>
+              <tr key={e.id}><td className="td whitespace-nowrap">{shortDateTime(e.at)}</td><td className="td"><Link href={`/admin/firms/${e.firmId}`} className="font-semibold hover:text-accent">{e.firmName}</Link></td><td className="td"><Status tone={TONE[e.event] ?? "pend"}>{e.event}</Status></td><td className="td mono text-xs hidden md:table-cell">{String(e.data.reference ?? e.accountId?.slice(0, 8) ?? "–")}</td><td className="td hidden lg:table-cell">{e.seen ? "Yes" : <span className="text-muted">No</span>}</td></tr>
             ))}</tbody>
           </table></div>
         )}

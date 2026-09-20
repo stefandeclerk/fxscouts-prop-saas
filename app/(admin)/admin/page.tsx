@@ -24,7 +24,7 @@ export default async function AdminHome() {
         <Card>
           <CardHeader title="Firms needing attention"><Link href="/admin/firms" className="btn btn-sm">All firms</Link></CardHeader>
           {attention.length === 0 ? <div className="px-5 py-10 text-center text-muted">Every firm is connected and receiving events.</div> : (
-            <div className="overflow-x-auto"><table className="w-full min-w-[760px] border-collapse">
+            <div className="overflow-x-auto"><table className="w-full border-collapse">
               <thead><tr><th className="th">Firm</th><th className="th">Problem</th><th className="th">Last event</th></tr></thead>
               <tbody>{attention.map((f) => (
                 <tr key={f.id}>

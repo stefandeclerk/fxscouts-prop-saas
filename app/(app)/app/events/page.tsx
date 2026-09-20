@@ -28,8 +28,8 @@ export default async function EventsPage() {
       <PageHeader title="Events" sub="Everything the gateway has sent this firm, signature-verified on arrival. Breaches, disagreements and behaviour changes are the ones to act on."><MarkSeen /></PageHeader>
       <Card>
         {events.length === 0 ? <div className="px-5 py-10 text-center text-muted">Nothing received yet. Events arrive after syncs run on the gateway.</div> : (
-          <div className="overflow-x-auto"><table className="w-full min-w-[760px] border-collapse">
-            <thead><tr><th className="th">Received</th><th className="th">Event</th><th className="th">Trader</th><th className="th">Detail</th></tr></thead>
+          <div className="overflow-x-auto"><table className="w-full border-collapse">
+            <thead><tr><th className="th">Received</th><th className="th">Event</th><th className="th">Trader</th><th className="th hidden md:table-cell">Detail</th></tr></thead>
             <tbody>{events.map((e) => {
               const data = (e.payload.data ?? {}) as Record<string, unknown>;
               return (
@@ -37,7 +37,7 @@ export default async function EventsPage() {
                   <td className="td whitespace-nowrap">{shortDateTime(e.receivedAt)}</td>
                   <td className="td"><Status tone={TONE[e.event] ?? "pend"}>{LABEL[e.event] ?? e.event}</Status></td>
                   <td className="td">{e.accountId ? <Link href={`/app/accounts/${e.accountId}`} className="font-semibold hover:text-accent">{String(data.reference ?? e.accountId.slice(0, 8))}</Link> : "–"}</td>
-                  <td className="td text-[13px] text-ink/80">{summary(e.event, data)}</td>
+                  <td className="td text-[13px] text-ink/80 hidden md:table-cell">{summary(e.event, data)}</td>
                 </tr>
               );
             })}</tbody>

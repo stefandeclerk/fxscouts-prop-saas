@@ -16,16 +16,16 @@ const NAV = [
 export default function AdminShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   return (
-    <div className="grid min-h-screen grid-cols-1 md:grid-cols-[232px_1fr]">
-      <aside className="relative isolate flex flex-row flex-wrap items-center gap-1 overflow-hidden border-b border-line bg-[#180c3a] px-3.5 py-3 text-white md:sticky md:top-0 md:h-screen md:flex-col md:items-stretch md:border-b-0 md:border-r md:py-5">
+    <div className="grid min-h-screen grid-cols-1 grid-rows-[auto_1fr] lg:grid-cols-[232px_1fr] lg:grid-rows-1">
+      <aside className="relative isolate flex flex-row flex-wrap items-center gap-1 overflow-hidden border-b border-line bg-[#180c3a] px-3.5 py-3 text-white lg:sticky lg:top-0 lg:h-screen lg:flex-col lg:items-stretch lg:border-b-0 lg:border-r lg:py-5">
         <SidebarWaves />
-        <Link href="/admin" className="mr-2 flex flex-col gap-1 px-2.5 md:mr-0 md:pb-4" aria-label={`${PRODUCT_FULL} admin`}>
+        <Link href="/admin" className="mr-2 flex flex-col gap-1 px-2.5 lg:mr-0 lg:pb-4" aria-label={`${PRODUCT_FULL} admin`}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src="/fxscouts-logo-white.svg" alt="FxScouts" className="h-[22px] w-auto" />
-          <span className="hidden text-[11px] font-medium tracking-wide text-[#7ff5e6]/80 md:block">{PRODUCT} · Admin</span>
+          <span className="hidden text-[11px] font-medium tracking-wide text-[#7ff5e6]/80 lg:block">{PRODUCT} · Admin</span>
         </Link>
         {NAV.map((n) => <NavLink key={n.href} item={n} active={n.href === "/admin" ? pathname === "/admin" : pathname.startsWith(n.href)} />)}
-        <div className="relative ml-auto text-[12px] text-white/80 md:ml-0 md:mt-auto md:border-t md:border-white/15 md:pt-3 md:pb-1">
+        <div className="relative ml-auto text-[12px] text-white/80 lg:ml-0 lg:mt-auto lg:border-t lg:border-white/15 lg:pt-3 lg:pb-1">
           <Link href="/app" className="hover:text-white">Firm console</Link>
         </div>
       </aside>

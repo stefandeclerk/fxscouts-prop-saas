@@ -31,7 +31,7 @@ export function NavLink({ item, active }: { item: NavItem; active: boolean }) {
 
 export function SidebarWaves() {
   return (
-    <svg aria-hidden className="pointer-events-none absolute inset-x-0 bottom-0 -z-10 hidden h-[200px] w-full opacity-80 md:block" viewBox="0 0 232 240" preserveAspectRatio="none">
+    <svg aria-hidden className="pointer-events-none absolute inset-x-0 bottom-0 -z-10 hidden h-[200px] w-full opacity-80 lg:block" viewBox="0 0 232 240" preserveAspectRatio="none">
       <defs>
         <linearGradient id="pw1" x1="0" x2="1" y1="0" y2="0"><stop offset="0%" stopColor="#6f5ff4" stopOpacity="0.35" /><stop offset="100%" stopColor="#1dacdf" stopOpacity="0.4" /></linearGradient>
         <linearGradient id="pw2" x1="0" x2="1" y1="0" y2="0"><stop offset="0%" stopColor="#1dacdf" stopOpacity="0.6" /><stop offset="100%" stopColor="#00bcbc" stopOpacity="0.7" /></linearGradient>
@@ -46,18 +46,18 @@ export default function Shell({ children, firmName, role, staff = false }: { chi
   const pathname = usePathname();
   const active = (href: string) => (href === "/app" ? pathname === "/app" : pathname.startsWith(href));
   return (
-    <div className="grid min-h-screen grid-cols-1 md:grid-cols-[232px_1fr]">
-      <aside className="relative isolate flex flex-row flex-wrap items-center gap-1 overflow-hidden border-b border-line bg-plum px-3.5 py-3 text-white md:sticky md:top-0 md:h-screen md:flex-col md:items-stretch md:border-b-0 md:border-r md:py-5">
+    <div className="grid min-h-screen grid-cols-1 grid-rows-[auto_1fr] lg:grid-cols-[232px_1fr] lg:grid-rows-1">
+      <aside className="relative isolate flex flex-row flex-wrap items-center gap-1 overflow-hidden border-b border-line bg-plum px-3.5 py-3 text-white lg:sticky lg:top-0 lg:h-screen lg:flex-col lg:items-stretch lg:border-b-0 lg:border-r lg:py-5">
         <SidebarWaves />
-        <Link href="/app" className="mr-2 flex flex-col gap-1 px-2.5 md:mr-0 md:pb-4" aria-label={PRODUCT_FULL}>
+        <Link href="/app" className="mr-2 flex flex-col gap-1 px-2.5 lg:mr-0 lg:pb-4" aria-label={PRODUCT_FULL}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src="/fxscouts-logo-white.svg" alt="FxScouts" className="h-[22px] w-auto" />
-          <span className="hidden text-[11px] font-medium tracking-wide text-[#7ff5e6]/80 md:block">{PRODUCT} · Console</span>
+          <span className="hidden text-[11px] font-medium tracking-wide text-[#7ff5e6]/80 lg:block">{PRODUCT} · Console</span>
         </Link>
         {MAIN.map((i) => <NavLink key={i.href} item={i} active={active(i.href)} />)}
-        <div className="hidden px-2.5 pt-4 pb-1.5 text-[11px] font-semibold uppercase tracking-wider text-white/45 md:block">Firm</div>
+        <div className="hidden px-2.5 pt-4 pb-1.5 text-[11px] font-semibold uppercase tracking-wider text-white/45 lg:block">Firm</div>
         {OPS.map((i) => <NavLink key={i.href} item={i} active={active(i.href)} />)}
-        <div className="relative mt-auto hidden items-center gap-2.5 border-t border-white/15 pt-3 md:flex">
+        <div className="relative mt-auto hidden items-center gap-2.5 border-t border-white/15 pt-3 lg:flex">
           <span className="grid h-[30px] w-[30px] place-items-center rounded-full bg-white/15 text-xs font-semibold text-white">{firmName.slice(0, 2).toUpperCase()}</span>
           <span className="min-w-0">
             <span className="block truncate">{firmName}</span>

@@ -47,8 +47,8 @@ export default function Programmes({ programmes, counts }: { programmes: Program
       <Card>
         {programmes.length === 0 ? <div className="px-5 py-10 text-center text-muted">No programmes yet. Create one, then import traders onto it.</div> : (
           <div className="overflow-x-auto">
-            <table className="w-full min-w-[760px] border-collapse">
-              <thead><tr><th className="th w-8" /><th className="th">Programme</th><th className="th w-full">Current rules</th><th className="th num">Traders</th><th className="th">State</th><th className="th" /></tr></thead>
+            <table className="w-full border-collapse">
+              <thead><tr><th className="th w-8" /><th className="th">Programme</th><th className="th w-full">Current rules</th><th className="th num hidden md:table-cell">Traders</th><th className="th hidden md:table-cell">State</th><th className="th" /></tr></thead>
               <tbody>
                 {programmes.map((p) => {
                   const open = expanded === p.id;
@@ -82,8 +82,8 @@ function FragmentRow({ p, open, summary, count, onToggle, onVersion, onActive }:
         <td className="td text-muted">{open ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}</td>
         <td className="td whitespace-nowrap"><span className="font-semibold">{p.name}</span><span className="block text-xs text-muted">Version {p.current?.version ?? 0} · created {shortDateTime(p.created_at)}</span></td>
         <td className="td"><Chips items={summary} /></td>
-        <td className="td num">{count}</td>
-        <td className="td"><Status tone={p.active ? "ok" : "pend"}>{p.active ? "Active" : "Archived"}</Status></td>
+        <td className="td num hidden md:table-cell">{count}</td>
+        <td className="td hidden md:table-cell"><Status tone={p.active ? "ok" : "pend"}>{p.active ? "Active" : "Archived"}</Status></td>
         <td className="td num whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
           <button className="btn btn-sm" onClick={onVersion}>New version</button>
           <button className="btn btn-sm ml-2" onClick={onActive}>{p.active ? "Archive" : "Restore"}</button>
@@ -94,16 +94,16 @@ function FragmentRow({ p, open, summary, count, onToggle, onVersion, onActive }:
           <td className="td bg-bg" colSpan={6}>
             <div className="px-2 py-1">
               <div className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted">Version history</div>
-              <table className="w-full min-w-[640px] border-collapse text-[13px]">
-                <thead><tr><th className="th">Version</th><th className="th">Effective from</th><th className="th">Rules</th><th className="th">Note</th><th className="th">Signed</th></tr></thead>
+              <table className="w-full border-collapse text-[13px]">
+                <thead><tr><th className="th">Version</th><th className="th">Effective from</th><th className="th">Rules</th><th className="th hidden lg:table-cell">Note</th><th className="th hidden md:table-cell">Signed</th></tr></thead>
                 <tbody>
                   {[...p.versions].reverse().map((v) => (
                     <tr key={v.version}>
                       <td className="td font-semibold">v{v.version}</td>
                       <td className="td whitespace-nowrap">{shortDateTime(v.effective_from)} UTC</td>
                       <td className="td"><Chips items={describeRules(v.rules)} /></td>
-                      <td className="td text-muted">{v.note ?? ""}</td>
-                      <td className="td">{v.signature ? <Status tone="ok">Yes</Status> : <Status tone="pend">No</Status>}</td>
+                      <td className="td text-muted hidden lg:table-cell">{v.note ?? ""}</td>
+                      <td className="td hidden md:table-cell">{v.signature ? <Status tone="ok">Yes</Status> : <Status tone="pend">No</Status>}</td>
                     </tr>
                   ))}
                 </tbody>
