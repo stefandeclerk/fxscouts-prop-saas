@@ -1,0 +1,14 @@
+login, investor password, server, reference, name, starting balance
+70012345, inv-2345, YourFirm-Eval, T-2001, Marcus K., 100000
+70012346, inv-2346, YourFirm-Eval, T-2002, Priya S., 100000
+70012347, inv-2347, YourFirm-Eval, T-2003, Lena W., 100000
+70012348, inv-2348, YourFirm-Eval, T-2004, Jonas B., 100000
+70012349, inv-2349, YourFirm-Eval, T-2005, Aiko T., 100000
+70012350, inv-2350, YourFirm-Eval, T-2006, Diego M., 50000
+70012351, inv-2351, YourFirm-Eval, T-2007, Sara N., 50000
+70012352, inv-2352, YourFirm-Eval, T-2008, Omar H., 200000
+# Funded accounts share the trader's reference with their evaluation account,
+# which is what links the two for the behaviour comparison.
+70020917, inv-0917, YourFirm-Live, T-0917, Elena V., 100000
+70020844, inv-0844, YourFirm-Live, T-0844, Ben O., 100000
+70020791, inv-0791, YourFirm-Live, T-0791, Chloe D., 100000

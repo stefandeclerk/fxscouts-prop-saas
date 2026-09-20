@@ -46,7 +46,7 @@ export default async function AdminFirmPage({ params }: { params: Promise<{ id: 
           </Card>
         </div>
         <div className="flex flex-col gap-4">
-          <FirmActions firmId={f.firm.id} name={f.firm.name} connected={!!f.connection} />
+          <FirmActions firmId={f.firm.id} name={f.firm.name} connected={!!f.connection} demo={process.env.NODE_ENV !== "production"} />
           <Card>
             <CardHeader title="Connection" />
             {f.connection ? (
