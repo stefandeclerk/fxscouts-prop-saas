@@ -2,8 +2,9 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { PRODUCT, PRODUCT_FULL } from "@/lib/brand";
 
-// Same layout as the Gateway site's nav; the wordmark says Prop and the
+// Same layout as the Gateway site's nav; the wordmark says Prop Monitor and the
 // dark surfaces are plum instead of navy, so the two products read as
 // siblings, not the same site.
 
@@ -15,10 +16,10 @@ const LINKS = [
 
 export function Logo({ light = false, compact = false }: { light?: boolean; compact?: boolean }) {
   return (
-    <Link href="/" className="flex items-center gap-2.5" aria-label="FxScouts Prop">
+    <Link href="/" className="flex items-center gap-2.5" aria-label={PRODUCT_FULL}>
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img src={light ? "/fxscouts-logo-white.svg" : "/fxscouts-logo-dark.svg"} alt="FxScouts" className="h-[26px] w-auto" />
-      <span className={`text-[13px] font-medium tracking-wide ${light ? "text-white/60" : "text-muted"} ${compact ? "hidden sm:inline" : ""}`}>Prop</span>
+      <span className={`text-[13px] font-medium tracking-wide ${light ? "text-white/60" : "text-muted"} ${compact ? "hidden sm:inline" : ""}`}>{PRODUCT}</span>
     </Link>
   );
 }

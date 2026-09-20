@@ -1,8 +1,9 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import { PRODUCT_FULL } from "@/lib/brand";
 
 export const metadata: Metadata = {
-  title: "FxScouts Prop",
+  title: PRODUCT_FULL,
   description: "Independent monitoring, payout checks and signed evidence for prop firms.",
   icons: { icon: "/fxscouts-favicon.png" },
 };

@@ -10,15 +10,15 @@ import { db } from "@/lib/server/db";
 // the data layer must filter by firm itself.
 export const AUTH_BYPASS = process.env.AUTH_BYPASS === "true" && process.env.NODE_ENV !== "production";
 
-let bypassFirm: string | null = null;
+// Fixed id so parallel first requests cannot create two firms.
+const BYPASS_FIRM_ID = "00000000-0000-4000-8000-00000000f1a1";
+let bypassReady = false;
 async function bypassFirmId(): Promise<string> {
-  if (bypassFirm) return bypassFirm;
-  const d = db();
-  const { data } = await d.from("firms").select("id").eq("name", "Local test firm").limit(1).maybeSingle();
-  if (data) return (bypassFirm = data.id);
-  const { data: created, error } = await d.from("firms").insert({ name: "Local test firm" }).select("id").single();
-  if (error || !created) throw new Error(`Could not create the bypass firm: ${error?.message ?? "unknown"}`);
-  return (bypassFirm = created.id);
+  if (bypassReady) return BYPASS_FIRM_ID;
+  const { error } = await db().from("firms").upsert({ id: BYPASS_FIRM_ID, name: "Local test firm" }, { onConflict: "id", ignoreDuplicates: true });
+  if (error) throw new Error(`Could not create the bypass firm: ${error.message}`);
+  bypassReady = true;
+  return BYPASS_FIRM_ID;
 }
 
 export async function supabaseServer(): Promise<SupabaseClient> {

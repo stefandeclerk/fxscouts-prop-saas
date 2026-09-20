@@ -1,16 +1,17 @@
 @import "tailwindcss";
 
-/* FxScouts brand palette, shared with the Gateway console. This product's
-   own signature is the deep-purple ("plum") sidebar and dark bands instead
-   of the Gateway's navy. */
+/* FxScouts brand palette. The Gateway's interactive colour is purple; this
+   product's is teal, with purple kept as a secondary. Dark surfaces are
+   plum instead of navy. Same components, different signature. */
 @theme {
   --color-ink: #00274f;
   --color-muted: #a0abb9;
   --color-line: #dadfe5;
   --color-bg: #f5f8fc;
   --color-surface: #ffffff;
-  --color-accent: #6f5ff4;
-  --color-accent-deep: #401e8b;
+  --color-accent: #0fa3b1;
+  --color-accent-deep: #0b5f6e;
+  --color-violet: #6f5ff4;
   --color-plum: #2a1660;
   --color-good: #00bcbc;
   --color-info: #1dacdf;
@@ -38,7 +39,7 @@ body {
 @layer components {
   .card { @apply bg-surface border border-line rounded-xl shadow-card; }
   .btn { @apply inline-flex items-center gap-2 rounded-lg border border-line bg-surface px-3.5 py-2 font-medium hover:border-muted transition-colors disabled:opacity-60; }
-  .btn-primary { @apply inline-flex items-center gap-2 rounded-lg border border-accent bg-accent px-3.5 py-2 font-medium text-white hover:bg-[#5e4ee6] transition-colors disabled:opacity-60; }
+  .btn-primary { @apply inline-flex items-center gap-2 rounded-lg border border-accent bg-accent px-3.5 py-2 font-medium text-white hover:bg-[#0d909d] transition-colors disabled:opacity-60; }
   .btn-sm { @apply px-2.5 py-1.5 text-[13px]; }
   .input { @apply w-full rounded-lg border border-line bg-surface px-3 py-2.5 text-ink outline-none focus:border-accent focus:ring-[3px] focus:ring-accent/20; }
   .select {

@@ -1,4 +1,4 @@
-# FxScouts Prop
+# FxScouts Prop Monitor
 
 Independent monitoring for prop firms, built as a customer of FxScouts
 Gateway. Firms write down their programme rules, import their challenge and
