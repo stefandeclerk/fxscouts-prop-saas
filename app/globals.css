@@ -54,6 +54,13 @@ body {
   tr:last-child > .td { @apply border-b-0; }
   .num { @apply text-right tabular-nums; }
   .mono { font-family: var(--font-mono); font-size: 12.5px; }
+
+  /* Tooltips: .tip wraps an icon button and a hidden box that appears on hover or keyboard focus. */
+  .tip { @apply relative inline-flex; }
+  .tip-btn { @apply inline-flex items-center rounded text-muted hover:text-accent focus-visible:text-accent focus-visible:outline-none; }
+  .tip-box { @apply pointer-events-none absolute bottom-full left-1/2 z-30 mb-2 w-max max-w-[260px] -translate-x-1/2 rounded-lg bg-ink px-3 py-2 text-left text-xs font-normal normal-case leading-snug text-white opacity-0 shadow-[0_8px_24px_rgba(0,39,79,0.25)] transition-opacity whitespace-normal; }
+  .tip-box::before { content: ""; @apply absolute -bottom-1 left-1/2 h-2 w-2 -translate-x-1/2 rotate-45 bg-ink; }
+  .tip:hover .tip-box, .tip:focus-within .tip-box { @apply opacity-100; }
 }
 
 @keyframes rise {

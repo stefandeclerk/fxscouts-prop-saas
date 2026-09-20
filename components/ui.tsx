@@ -1,7 +1,7 @@
 "use client";
 
-import { X } from "lucide-react";
-import { useEffect } from "react";
+import { Info, X } from "lucide-react";
+import { useEffect, useId } from "react";
 
 
 export function PageHeader({ title, sub, children }: { title: string; sub?: React.ReactNode; children?: React.ReactNode }) {
@@ -20,19 +20,31 @@ export function Card({ children, className = "" }: { children: React.ReactNode; 
   return <div className={`card ${className}`}>{children}</div>;
 }
 
-export function CardHeader({ title, children }: { title: string; children?: React.ReactNode }) {
+export function CardHeader({ title, tip, children }: { title: string; tip?: string; children?: React.ReactNode }) {
   return (
     <div className="flex items-center justify-between gap-3 border-b border-line px-5 py-4">
-      <h2 className="text-[15px] font-semibold">{title}</h2>
+      <h2 className="flex items-center gap-1.5 text-[15px] font-semibold">{title}{tip && <Tip text={tip} />}</h2>
       {children}
     </div>
   );
 }
 
-export function Stat({ label, value, suffix, detail }: { label: string; value: React.ReactNode; suffix?: string; detail?: React.ReactNode }) {
+// Hover or focus the icon to read `text`. Shown with CSS alone (see .tip in
+// globals.css); the text also reaches screen readers through aria-describedby.
+export function Tip({ text }: { text: string }) {
+  const id = useId();
+  return (
+    <span className="tip">
+      <button type="button" aria-describedby={id} aria-label="More information" className="tip-btn"><Info className="h-3.5 w-3.5" strokeWidth={2} /></button>
+      <span role="tooltip" id={id} className="tip-box">{text}</span>
+    </span>
+  );
+}
+
+export function Stat({ label, value, suffix, detail, tip }: { label: string; value: React.ReactNode; suffix?: string; detail?: React.ReactNode; tip?: string }) {
   return (
     <div className="card px-5 py-4">
-      <div className="text-[13px] text-muted">{label}</div>
+      <div className="flex items-center gap-1.5 text-[13px] text-muted">{label}{tip && <Tip text={tip} />}</div>
       <div className="mt-1 text-[26px] font-bold tracking-tight">
         {value}
         {suffix && <span className="ml-1.5 text-[15px] font-medium text-muted">{suffix}</span>}
