@@ -28,7 +28,7 @@ export default async function OverviewPage() {
         <Stat label="Disagreements" value={<span className={o.totals.disagreements ? "text-warn" : ""}>{o.totals.disagreements}</span>} detail="Your decision vs the gateway's" />
         <Stat label="Need attention" value={<span className={o.totals.attention ? "text-bad" : ""}>{o.totals.attention}</span>} detail="Reconnect required or retrying" />
       </div>
-      <div className="grid grid-cols-1 gap-4 xl:grid-cols-[2fr_1fr]">
+      <div className="grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,2fr)_minmax(300px,1fr)]">
         <Card>
           <CardHeader title="Programmes"><Link href="/app/programmes" className="btn btn-sm">Manage</Link></CardHeader>
           {o.programmes.length === 0 ? <div className="px-5 py-10 text-center text-muted">No programmes yet. <Link href="/app/programmes" className="text-accent">Create one</Link> to start evaluating traders.</div> : (

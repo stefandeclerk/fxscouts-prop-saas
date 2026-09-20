@@ -34,10 +34,29 @@ export async function supabaseServer(): Promise<SupabaseClient> {
   });
 }
 
-export type Session = { userId: string; firmId: string; role: string };
+export type Session = { userId: string; firmId: string; role: string; staff?: boolean };
 
-// The signed-in user's firm, or null.
+export const STAFF_FIRM_COOKIE = "pm_staff_firm";
+
+// Is the signed-in user staff? Everyone is under AUTH_BYPASS.
+export async function isStaff(): Promise<boolean> {
+  if (AUTH_BYPASS) return true;
+  const sb = await supabaseServer();
+  const { data: { user } } = await sb.auth.getUser();
+  if (!user) return false;
+  const { data } = await db().from("admins").select("user_id").eq("user_id", user.id).maybeSingle();
+  return !!data;
+}
+
+// The signed-in user's firm, or null. Staff who have opened a firm from
+// /admin act as that firm (role "staff") until they leave it.
 export async function currentFirm(): Promise<Session | null> {
+  const store = await cookies();
+  const staffFirm = store.get(STAFF_FIRM_COOKIE)?.value;
+  if (staffFirm && (await isStaff())) {
+    const { data } = await db().from("firms").select("id").eq("id", staffFirm).maybeSingle();
+    if (data) return { userId: AUTH_BYPASS ? "bypass" : (await (await supabaseServer()).auth.getUser()).data.user?.id ?? "staff", firmId: staffFirm, role: "staff", staff: true };
+  }
   if (AUTH_BYPASS) return { userId: "bypass", firmId: await bypassFirmId(), role: "owner" };
   const sb = await supabaseServer();
   const { data: { user } } = await sb.auth.getUser();

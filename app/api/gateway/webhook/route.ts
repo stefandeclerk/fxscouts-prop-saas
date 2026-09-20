@@ -13,7 +13,10 @@ export async function POST(req: NextRequest) {
   if (!firmId) return NextResponse.json({ error: "firm required" }, { status: 400 });
   const raw = await req.text();
   const secret = await webhookSecretFor(firmId);
-  if (!secret || !verifyGatewaySignature(raw, req.headers.get("x-gateway-signature"), secret)) return NextResponse.json({ error: "Bad signature" }, { status: 401 });
+  if (!secret || !verifyGatewaySignature(raw, req.headers.get("x-gateway-signature"), secret)) {
+    await db().from("webhook_rejections").insert({ firm_id: firmId, reason: secret ? "bad_signature" : "unknown_firm" }).then(() => undefined, () => undefined);
+    return NextResponse.json({ error: "Bad signature" }, { status: 401 });
+  }
   let payload: { event?: string; account_id?: string | null } = {};
   try { payload = JSON.parse(raw); } catch { return NextResponse.json({ error: "Invalid JSON" }, { status: 400 }); }
   const { error } = await db().from("gateway_events").insert({ firm_id: firmId, event: String(payload.event ?? "unknown"), account_id: payload.account_id ?? null, payload });

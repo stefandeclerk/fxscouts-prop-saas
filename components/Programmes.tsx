@@ -4,7 +4,7 @@ import { ChevronDown, ChevronRight, Plus } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import ProgrammeEditor from "@/components/ProgrammeEditor";
-import { Card, CardHeader, Note, PageHeader, Status } from "@/components/ui";
+import { Card, Note, PageHeader, Status } from "@/components/ui";
 import type { Programme, ProgrammeRules } from "@/lib/gateway/types";
 import { shortDateTime } from "@/lib/format";
 
@@ -23,6 +23,11 @@ export function describeRules(r: ProgrammeRules): string[] {
   return out;
 }
 
+function Chips({ items }: { items: string[] }) {
+  if (items.length === 0) return <span className="text-muted">No rules set</span>;
+  return <div className="flex flex-wrap gap-1.5">{items.map((t) => <span key={t} className="whitespace-nowrap rounded-md bg-bg px-2 py-0.5 text-xs font-medium text-ink/80">{t}</span>)}</div>;
+}
+
 export default function Programmes({ programmes, counts }: { programmes: Programme[]; counts: Record<string, number> }) {
   const router = useRouter();
   const [creating, setCreating] = useState(false);
@@ -39,36 +44,30 @@ export default function Programmes({ programmes, counts }: { programmes: Program
       <PageHeader title="Programmes" sub="Your challenge and funded rules, versioned. Every trader on a programme is evaluated after each sync, and every trade is judged by the rules in force when it closed.">
         <button className="btn-primary" onClick={() => setCreating(true)}><Plus className="h-4 w-4" />New programme</button>
       </PageHeader>
-      <div className="grid grid-cols-1 gap-4 xl:grid-cols-[2fr_1fr]">
-        <Card>
-          {programmes.length === 0 ? <div className="px-5 py-10 text-center text-muted">No programmes yet. Create one, then import traders onto it.</div> : (
-            <div className="overflow-x-auto">
-              <table className="w-full border-collapse">
-                <thead><tr><th className="th w-8" /><th className="th">Programme</th><th className="th">Current rules</th><th className="th num">Traders</th><th className="th">State</th><th className="th" /></tr></thead>
-                <tbody>
-                  {programmes.map((p) => {
-                    const open = expanded === p.id;
-                    const summary = describeRules(p.current?.rules ?? {});
-                    return (
-                      <FragmentRow key={p.id} p={p} open={open} summary={summary} count={counts[p.id] ?? 0} onToggle={() => setExpanded(open ? null : p.id)} onVersion={() => setVersioning(p)} onActive={() => toggleActive(p)} />
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </Card>
-        <div className="flex flex-col gap-4">
-          <Card>
-            <CardHeader title="How versions work" />
-            <div className="flex flex-col gap-3 p-5 text-[13.5px] text-ink/80">
-              <p>Saving a change never edits the old rules. It creates a new version, signed by the gateway, with the date it takes effect.</p>
-              <p>Per-trade rules (lot size, hold time, restricted windows, weekend holds) are judged trade by trade against the version in force when each trade closed. Account-wide rules (drawdown, daily loss, consistency, minimum days) use the version in force at evaluation time.</p>
-              <p>So a rule change after a trader has passed cannot be applied to their earlier trades, and neither you nor the gateway can quietly rewrite history.</p>
-            </div>
-          </Card>
-          <Note>Every version is stored and signed by the gateway, not by this app.</Note>
-        </div>
+      <Card>
+        {programmes.length === 0 ? <div className="px-5 py-10 text-center text-muted">No programmes yet. Create one, then import traders onto it.</div> : (
+          <div className="overflow-x-auto">
+            <table className="w-full border-collapse">
+              <thead><tr><th className="th w-8" /><th className="th">Programme</th><th className="th w-full">Current rules</th><th className="th num">Traders</th><th className="th">State</th><th className="th" /></tr></thead>
+              <tbody>
+                {programmes.map((p) => {
+                  const open = expanded === p.id;
+                  const summary = describeRules(p.current?.rules ?? {});
+                  return (
+                    <FragmentRow key={p.id} p={p} open={open} summary={summary} count={counts[p.id] ?? 0} onToggle={() => setExpanded(open ? null : p.id)} onVersion={() => setVersioning(p)} onActive={() => toggleActive(p)} />
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </Card>
+      <div className="mt-4 grid gap-4 md:grid-cols-3">
+        {[
+          ["Versions, never edits", "Saving a change creates a new version, signed by the gateway, with the date it takes effect. Old versions are never changed."],
+          ["Judged trade by trade", "Lot size, hold time, restricted windows and weekend holds use the version in force when each trade closed. Drawdown, daily loss, consistency and minimum days use the current version."],
+          ["Nobody rewrites history", "A rule change after a trader has passed cannot touch their earlier trades, and neither you nor the gateway can quietly alter the record."],
+        ].map(([t, x]) => <Note key={t}><b className="mb-1 block">{t}</b><span className="text-ink/75">{x}</span></Note>)}
       </div>
       <ProgrammeEditor open={creating} onClose={() => setCreating(false)} />
       {versioning && <ProgrammeEditor open programmeId={versioning.id} name={versioning.name} rules={versioning.current?.rules ?? {}} onClose={() => setVersioning(null)} />}
@@ -81,8 +80,8 @@ function FragmentRow({ p, open, summary, count, onToggle, onVersion, onActive }:
     <>
       <tr className="cursor-pointer" onClick={onToggle}>
         <td className="td text-muted">{open ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}</td>
-        <td className="td"><span className="font-semibold">{p.name}</span><span className="block text-xs text-muted">Version {p.current?.version ?? 0} · created {shortDateTime(p.created_at)}</span></td>
-        <td className="td text-[13px]">{summary.length ? summary.join(" · ") : <span className="text-muted">No rules set</span>}</td>
+        <td className="td whitespace-nowrap"><span className="font-semibold">{p.name}</span><span className="block text-xs text-muted">Version {p.current?.version ?? 0} · created {shortDateTime(p.created_at)}</span></td>
+        <td className="td"><Chips items={summary} /></td>
         <td className="td num">{count}</td>
         <td className="td"><Status tone={p.active ? "ok" : "pend"}>{p.active ? "Active" : "Archived"}</Status></td>
         <td className="td num whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
@@ -102,7 +101,7 @@ function FragmentRow({ p, open, summary, count, onToggle, onVersion, onActive }:
                     <tr key={v.version}>
                       <td className="td font-semibold">v{v.version}</td>
                       <td className="td whitespace-nowrap">{shortDateTime(v.effective_from)} UTC</td>
-                      <td className="td">{describeRules(v.rules).join(" · ") || <span className="text-muted">None</span>}</td>
+                      <td className="td"><Chips items={describeRules(v.rules)} /></td>
                       <td className="td text-muted">{v.note ?? ""}</td>
                       <td className="td">{v.signature ? <Status tone="ok">Yes</Status> : <Status tone="pend">No</Status>}</td>
                     </tr>

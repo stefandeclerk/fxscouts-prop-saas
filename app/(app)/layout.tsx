@@ -8,5 +8,5 @@ export const dynamic = "force-dynamic";
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const s = await currentFirm();
   if (!s) redirect("/login");
-  return <Shell firmName={await firmName(s.firmId)} role={AUTH_BYPASS ? "local test, no sign-in" : s.role}>{children}</Shell>;
+  return <Shell firmName={await firmName(s.firmId)} role={s.staff ? "staff" : AUTH_BYPASS ? "local test, no sign-in" : s.role} staff={!!s.staff}>{children}</Shell>;
 }
