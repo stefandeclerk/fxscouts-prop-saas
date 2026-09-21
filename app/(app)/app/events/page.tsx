@@ -6,8 +6,8 @@ import { shortDateTime } from "@/lib/format";
 
 export const dynamic = "force-dynamic";
 
-const LABEL: Record<string, string> = { "evaluation.breach": "Breach", "evaluation.disagreement": "Disagreement", "behaviour.changed": "Behaviour changed", "correlation.flagged": "Linked accounts", "correlation.cleared": "Link cleared", "account.reconnect_required": "Reconnect required", "sync.failed": "Sync failed", "sync.completed": "Synced", "account.connected": "Connected", "account.disconnected": "Disconnected" };
-const TONE: Record<string, Tone> = { "evaluation.breach": "bad", "evaluation.disagreement": "warn", "behaviour.changed": "warn", "correlation.flagged": "bad", "correlation.cleared": "ok", "account.reconnect_required": "bad", "sync.failed": "warn", "sync.completed": "ok", "account.connected": "ok", "account.disconnected": "pend" };
+const LABEL: Record<string, string> = { "evaluation.breach": "Breach", "evaluation.disagreement": "Disagreement", "behaviour.changed": "Behaviour changed", "correlation.flagged": "Linked accounts", "correlation.cleared": "Link cleared", "report.ready": "Report ready", "account.reconnect_required": "Reconnect required", "sync.failed": "Sync failed", "sync.completed": "Synced", "account.connected": "Connected", "account.disconnected": "Disconnected" };
+const TONE: Record<string, Tone> = { "evaluation.breach": "bad", "evaluation.disagreement": "warn", "behaviour.changed": "warn", "correlation.flagged": "bad", "correlation.cleared": "ok", "report.ready": "ok", "account.reconnect_required": "bad", "sync.failed": "warn", "sync.completed": "ok", "account.connected": "ok", "account.disconnected": "pend" };
 
 function summary(event: string, data: Record<string, unknown>): string {
   switch (event) {
@@ -16,6 +16,7 @@ function summary(event: string, data: Record<string, unknown>): string {
     case "behaviour.changed": return `${((data.exceeded as string[]) ?? []).join(", ")} moved more than ${data.threshold_pct}% since evaluation`;
     case "correlation.flagged": return `${data.peers} linked ${data.peers === 1 ? "account" : "accounts"}, ${data.kind}, ${data.severity}${data.group_id ? " · part of a group" : ""}`;
     case "correlation.cleared": return "No longer moves with another account";
+    case "report.ready": return `${data.period}${data.partial ? " (month so far)" : ""}`;
     case "sync.completed": return `${data.deals} deals, ${data.trades} trades`;
     case "sync.failed": case "account.reconnect_required": return String((data.error as { message?: string } | undefined)?.message ?? "");
     default: return "";

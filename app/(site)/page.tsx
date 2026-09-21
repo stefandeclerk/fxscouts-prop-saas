@@ -14,7 +14,7 @@ const FEATURES: Feature[] = [
   { icon: ScrollText, title: "Rules locked to every trade", text: "Your programme rules are versioned and signed. Each trade is judged by the version in force when it closed; a change today cannot touch yesterday." },
   { icon: GitCompareArrows, title: "A second opinion on breaches", text: "Tell us what your engine decided. When we see it differently, you hear about it first, before the trader does." },
   { icon: Scale, title: "Payout checks in seconds", text: "Consistency, quick strikes, size escalation, restricted windows: every flag names the trades behind it, so you can show the trader what was seen." },
-  { icon: ShieldCheck, title: "A record nobody can alter", text: "After every sync the full ledger is hashed, chained and signed. A ledger that does not match a seal has been changed since." },
+  { icon: ShieldCheck, title: "A record nobody can alter", text: "After every sync the full ledger is hashed, chained and signed, and once a day anchored in the Bitcoin blockchain. Nobody can alter a record or move its date afterwards, us included." },
   { icon: FileCheck2, title: "Evidence on demand", text: "One signed file per trader: ledger, rules, evaluations, decisions, payout checks, and a statement of demo or live. For adjudicators, auditors and regulators." },
 ];
 

@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Activity, ClipboardCheck, LayoutDashboard, Settings, Users, type LucideIcon } from "lucide-react";
+import { Activity, ClipboardCheck, FileBarChart2, LayoutDashboard, Settings, Users, type LucideIcon } from "lucide-react";
 import SignOut from "@/components/SignOut";
 import { PRODUCT, PRODUCT_FULL } from "@/lib/brand";
 import { SidebarWaves } from "@/components/Waves";
@@ -17,6 +17,7 @@ const MAIN: NavItem[] = [
   { href: "/app/programmes", label: "Programmes", icon: ClipboardCheck },
   { href: "/app/accounts", label: "Traders", icon: Users },
   { href: "/app/events", label: "Events", icon: Activity },
+  { href: "/app/reports", label: "Reports", icon: FileBarChart2 },
 ];
 const OPS: NavItem[] = [{ href: "/app/settings", label: "Settings", icon: Settings }];
 

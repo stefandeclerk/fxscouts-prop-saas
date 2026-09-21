@@ -12,6 +12,7 @@ const LINKS = [
   { href: "/#how", label: "How it works" },
   { href: "/#evidence", label: "Evidence" },
   { href: "/#pricing", label: "Pricing" },
+  { href: "/verify", label: "Verify a record" },
 ];
 
 export function Logo({ light = false, compact = false }: { light?: boolean; compact?: boolean }) {

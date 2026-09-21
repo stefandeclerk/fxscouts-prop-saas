@@ -2,8 +2,8 @@ import "server-only";
 
 import { decrypt, encrypt, toBytea } from "@/lib/server/crypto";
 import { db } from "@/lib/server/db";
-import type { BatchResult, CorrelationGroup, CorrelationRecord, CustomerSettings, Decision, DecisionKind, Evaluation, GatewayAccount, PayoutCheck, Programme, ProgrammeRules, Seal, Trade } from "@/lib/gateway/types";
-import { sampleCorrelations, sampleGroups, sampleSettings } from "@/lib/gateway/sample";
+import type { Anchor, BatchResult, CorrelationGroup, CorrelationRecord, CustomerSettings, Decision, DecisionKind, Evaluation, GatewayAccount, PayoutCheck, Programme, ProgrammeRules, Report, ReportSummary, Seal, Simulation, Trade } from "@/lib/gateway/types";
+import { sampleCorrelations, sampleGroups, sampleReport, sampleReports, sampleSettings, sampleSimulation } from "@/lib/gateway/sample";
 
 // The gateway API, as this app calls it. One instance per firm, holding
 // that firm's API key; only server code can construct one. The app never
@@ -70,6 +70,13 @@ export class Gateway {
   settings() { return this.optional(() => this.call<CustomerSettings>("GET", "/settings"), () => sampleSettings()); }
   updateSettings(patch: Partial<CustomerSettings>) { return this.call<CustomerSettings>("PATCH", "/settings", patch); }
 
+  // Reports and simulation: same 404 tolerance as correlations.
+  reports(limit = 24) { return this.optional(() => this.call<{ reports: ReportSummary[] }>("GET", `/reports?limit=${limit}`).then((r) => r.reports), () => sampleReports()); }
+  report(id: string) { return this.optional(() => this.call<Report>("GET", `/reports/${id}`), () => sampleReport(id)); }
+  reportDownload(id: string) { return this.call<string>("GET", `/reports/${id}/download`, undefined, true); }
+  requestReport(period: string) { return this.call<{ id: string }>("POST", "/reports", { period }); }
+  simulate(programmeId: string, rules: ProgrammeRules, from?: string | null) { return this.optional(() => this.call<Simulation>("POST", `/programmes/${programmeId}/simulate`, { rules, from: from ?? null }), () => sampleSimulation(programmeId, rules)); }
+
   private async optional<T>(fn: () => Promise<T>, fallback: () => T): Promise<T> {
     if (process.env.CORRELATION_SAMPLE === "true") return fallback();
     try { return await fn(); } catch (e) { if (e instanceof GatewayError && e.status === 404) return fallback(); throw e; }
@@ -81,7 +88,22 @@ export class Gateway {
   deleteWebhook(id: string) { return this.call<{ ok: boolean }>("DELETE", `/webhooks/${id}`); }
 }
 
-// Unauthenticated, for the verification key.
+// Public routes, no API key: anyone holding a record can check it.
+export type Verification = { valid: boolean; anchor?: Anchor | null; path?: { side: "left" | "right"; hash: string }[]; verified?: boolean };
+
+export async function verifyRecord(body_hash: string, signature: string, seal_hash?: string): Promise<Verification> {
+  const res = await fetch(`${BASE()}/api/v1/verify`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ body_hash, signature, seal_hash }), cache: "no-store", signal: AbortSignal.timeout(15_000) });
+  if (!res.ok) throw new GatewayError(res.status, `Gateway returned ${res.status}`);
+  return (await res.json()) as Verification;
+}
+
+export async function sealAnchor(seal_hash: string): Promise<{ anchor: Anchor | null; verified: boolean } | null> {
+  const res = await fetch(`${BASE()}/api/v1/seals/${seal_hash}/anchor`, { cache: "no-store", signal: AbortSignal.timeout(15_000) });
+  if (res.status === 404) return null;
+  if (!res.ok) throw new GatewayError(res.status, `Gateway returned ${res.status}`);
+  return (await res.json()) as { anchor: Anchor | null; verified: boolean };
+}
+
 export async function gatewayPublicKey(): Promise<string | null> {
   try {
     const res = await fetch(`${BASE()}/api/v1/public-key`, { cache: "no-store", signal: AbortSignal.timeout(10_000) });

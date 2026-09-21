@@ -2,9 +2,11 @@
 
 import { useRouter } from "next/navigation";
 import { Plus, X } from "lucide-react";
+import Link from "next/link";
 import { useState } from "react";
-import { Field, Modal, Note } from "@/components/ui";
-import type { BannedWindow, ProgrammeRules } from "@/lib/gateway/types";
+import { Field, Modal, Note, Status } from "@/components/ui";
+import type { BannedWindow, ProgrammeRules, Simulation } from "@/lib/gateway/types";
+import { phaseLabel } from "@/lib/format";
 
 // One form for creating a programme and for adding a version to one. Every
 // save of an existing programme creates a new signed version; nothing is
@@ -20,11 +22,12 @@ export default function ProgrammeEditor({ programmeId, name, rules: initial = {}
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [windows, setWindows] = useState<BannedWindow[]>(initial.bannedWindows ?? []);
+  const [sim, setSim] = useState<Simulation | null>(null);
+  const [simBusy, setSimBusy] = useState(false);
   const editing = !!programmeId;
 
-  const submit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    const f = new FormData(e.currentTarget);
+  const rulesFrom = (form: HTMLFormElement) => {
+    const f = new FormData(form);
     const s = (k: string) => String(f.get(k) ?? "").trim();
     const rules: Record<string, unknown> = {
       profitTargetPct: s("profitTargetPct"), maxDailyLossPct: s("maxDailyLossPct"), dailyResetUtc: s("dailyResetUtc"),
@@ -33,9 +36,27 @@ export default function ProgrammeEditor({ programmeId, name, rules: initial = {}
       minHoldSeconds: s("minHoldSeconds"), maxTradesPerDay: s("maxTradesPerDay"), behaviourChangePct: s("behaviourChangePct"),
       bannedWindows: windows.filter((w) => w.fromUtc && w.toUtc),
     };
+    return { rules, s };
+  };
+
+  // Runs the proposed rules over the programme's accounts on the gateway;
+  // nothing is written. The version note records which preview was seen.
+  const preview = async (form: HTMLFormElement) => {
+    setSimBusy(true); setError(null);
+    const { rules } = rulesFrom(form);
+    const res = await fetch(`/api/app/programmes/${programmeId}/simulate`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ rules }) });
+    setSimBusy(false);
+    if (!res.ok) { setError((await res.json().catch(() => ({}))).error ?? "Could not preview"); return; }
+    setSim(await res.json());
+  };
+
+  const submit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const { rules, s } = rulesFrom(e.currentTarget);
     setBusy(true); setError(null);
+    const note = [s("note"), sim ? `[preview ${sim.body_hash.slice(0, 16)}]` : ""].filter(Boolean).join(" ");
     const res = editing
-      ? await fetch(`/api/app/programmes/${programmeId}`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ rules, effectiveFrom: s("effectiveFrom") || undefined, note: s("note") }) })
+      ? await fetch(`/api/app/programmes/${programmeId}`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ rules, effectiveFrom: s("effectiveFrom") || undefined, note }) })
       : await fetch("/api/app/programmes", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ name: s("name"), rules, note: s("note") }) });
     setBusy(false);
     if (!res.ok) { setError((await res.json().catch(() => ({}))).error ?? "Could not save"); return; }
@@ -95,10 +116,48 @@ export default function ProgrammeEditor({ programmeId, name, rules: initial = {}
         )}
         {!editing && <Field label="Note"><input className="input" name="note" placeholder="Where these rules were read from" /></Field>}
 
+        {editing && sim && <Preview sim={sim} />}
         {error && <p className="mb-3 text-[13px] text-bad">{error}</p>}
         <Note>Leave a field empty when the programme has no such rule. Daily loss and drawdown are measured on closed trades and marked as estimates; everything else is exact. {editing ? "Saving creates a new signed version; earlier versions are never changed." : ""}</Note>
-        <div className="mt-4 flex justify-end gap-2"><button type="button" className="btn" onClick={onClose}>Cancel</button><button type="submit" className="btn-primary" disabled={busy}>{busy ? "Saving" : editing ? "Save new version" : "Create programme"}</button></div>
+        <div className="mt-4 flex justify-end gap-2"><button type="button" className="btn" onClick={onClose}>Cancel</button>{editing && <button type="button" className="btn" disabled={busy || simBusy} onClick={(e) => preview(e.currentTarget.form!)}>{simBusy ? "Previewing" : sim ? "Preview again" : "Preview impact"}</button>}<button type="submit" className="btn-primary" disabled={busy}>{busy ? "Saving" : editing ? "Save new version" : "Create programme"}</button></div>
       </form>
     </Modal>
+  );
+}
+
+// What the proposed rules would have concluded for the accounts already on
+// the programme, against what the rules in force concluded. Estimated rules
+// (daily loss, drawdown) stay estimated in both.
+function Preview({ sim }: { sim: Simulation }) {
+  const RULE: Record<string, string> = { maxLot: "Lot size", maxDailyLoss: "Daily loss", maxDrawdown: "Drawdown", minHoldSeconds: "Hold time", consistency: "Consistency", bannedWindows: "Restricted windows", minTradingDays: "Trading days", weekendHolds: "Weekend holds", maxTradesPerDay: "Trades per day", profitTarget: "Profit target" };
+  const moved = sim.summary.pass_to_breach + sim.summary.breach_to_pass;
+  return (
+    <div className="mb-4 rounded-xl border border-line bg-bg">
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-1 border-b border-line px-4 py-2.5 text-[13px]">
+        <Status tone={sim.summary.pass_to_breach > 0 ? "warn" : "ok"}>{moved === 0 ? "No verdict changes" : `${moved} of ${sim.accounts} verdicts change`}</Status>
+        <span><b className="text-bad">{sim.summary.pass_to_breach}</b> pass → breach</span>
+        <span><b className="text-good">{sim.summary.breach_to_pass}</b> breach → pass</span>
+        <span className="text-muted">against rules v{sim.current_version} · {sim.signature ? "signed preview" : "unsigned"}</span>
+      </div>
+      {sim.by_rule.length > 0 && (
+        <table className="w-full border-collapse text-[13px]">
+          <thead><tr><th className="th">Rule</th><th className="th num">Fail now</th><th className="th num">Fail after</th><th className="th num">Newly fail</th><th className="th num">Newly pass</th></tr></thead>
+          <tbody>{sim.by_rule.map((r) => <tr key={r.rule}><td className="td font-medium">{RULE[r.rule] ?? r.rule}</td><td className="td num">{r.before_fail}</td><td className="td num">{r.after_fail}</td><td className={`td num ${r.newly_fail ? "font-semibold text-bad" : ""}`}>{r.newly_fail}</td><td className={`td num ${r.newly_pass ? "font-semibold text-good" : ""}`}>{r.newly_pass}</td></tr>)}</tbody>
+        </table>
+      )}
+      {sim.changed.length > 0 && (
+        <div className="max-h-[200px] overflow-auto border-t border-line">
+          {sim.changed.map((c) => (
+            <div key={c.account_id} className="flex flex-wrap items-center gap-x-3 gap-y-0.5 border-b border-line px-4 py-2 text-[13px] last:border-b-0">
+              <Link href={`/app/accounts/${c.account_id}`} className="font-semibold hover:text-accent">{c.reference ?? c.account_id.slice(0, 8)}</Link>
+              <span className="text-muted">{phaseLabel(c.phase)}</span>
+              <span>{c.before} → <b className={c.after === "breach" ? "text-bad" : "text-good"}>{c.after}</b></span>
+              <span className="text-muted">{c.rules_changed.map((r) => `${RULE[r.rule] ?? r.rule}: ${r.observed}`).join("; ")}</span>
+            </div>
+          ))}
+        </div>
+      )}
+      <p className="px-4 py-2 text-xs text-muted">A preview reads the same trades and runs the same evaluator as a real evaluation, with the proposed rules applied to every trade. Nothing is written. The behaviour-change threshold does not affect verdicts and is not previewed.</p>
+    </div>
   );
 }

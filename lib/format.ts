@@ -38,3 +38,7 @@ export function stateLabel(state: string): string {
 export function phaseLabel(p: string | null): string {
   return p === "funded" ? "Funded" : p === "evaluation" ? "Evaluation" : "No phase";
 }
+
+export function monthLabel(iso: string): string {
+  return new Date(iso).toLocaleDateString("en-GB", { month: "long", year: "numeric", timeZone: "UTC" });
+}
